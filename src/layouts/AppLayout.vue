@@ -18,7 +18,8 @@ const PERIOD_TIMES = [
 const DEFAULT_CLASSES = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B'];
 
 const DUMMY_TEACHERS = [
-  "Hj. NUR HASANAH, S.Pd.I.", "Hj. MUHIBBAH, S.Ag.", "NURHAYATI, S.Pd.",
+  "ABDUL HALIM, S.Pd.I.", "BAYU KARTAWAN, S.Kom.", "AHMAD WAHYUDI, S.Pd.",
+  "DARMA SASTRAWAN, S.Pd.", "MUHAMMAD JUAINI, S.Pd.I.", "EMBUN ATUN, S.Pd.I.",
   "ERPAHARDIANA, S.Pd.", "HERMA NURHIDAYATI NINGSIH, S.Pd.", "LAILA FITRIA HUDIANA, S.Pd.",
   "MURNIATI, S.Pd.I.", "MUSTIKA SARI, S.Pd.", "RUSNAH, S.Pd.I.",
   "SRI SUSILA ANGGRAINI, S.Pd.I.", "M. IMROM. S.Pd."
@@ -37,7 +38,8 @@ const DUMMY_SUBJECTS = [
   { name: "Seni Musik", type: "umum" },
   { name: "Seni Rupa", type: "umum" },
   { name: "Bahasa Inggris", type: "umum" },
-  { name: "Bahasa Arab", type: "agama" }
+  { name: "Bahasa Arab", type: "umum" },
+  { name: "Bahasa Sasak", type: "mulok" }
 ];
 
 // --- STATE ---

@@ -2,6 +2,8 @@
 import { UserCheck } from 'lucide-vue-next';
 import AppCard from '../ui/AppCard.vue';
 import AppBadge from '../ui/AppBadge.vue';
+import AppSelect from '../ui/AppSelect.vue';
+import { computed } from 'vue';
 
 const props = defineProps({
   teachers: Array,
@@ -11,12 +13,25 @@ const props = defineProps({
 });
 
 defineEmits(['setHomeroom']);
+
+const getTeacherOptions = (currentClass) => {
+  return props.teachers.map(t => {
+    const homeroomClass = props.getTeacherHomeroomClass(t.id);
+    const isDisabled = homeroomClass && homeroomClass !== currentClass;
+    return {
+      label: t.name,
+      value: t.id,
+      disabled: isDisabled,
+      description: isDisabled ? `Wali Kelas ${homeroomClass}` : ''
+    };
+  });
+};
 </script>
 
 <template>
   <div class="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 overflow-y-auto h-full content-start bg-slate-50/50 dark:bg-slate-950/50 custom-scrollbar transition-colors duration-500">
     <div v-for="cls in classes" :key="cls" 
-      class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 dark:hover:shadow-none transition-all duration-500 flex flex-col group relative overflow-visible border-b-4 border-b-transparent hover:border-b-indigo-500 dark:hover:border-b-indigo-400">
+      class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 dark:hover:shadow-none transition-all duration-500 flex flex-col group relative overflow-visible border-b-4 border-b-transparent hover:border-b-indigo-500 dark:hover:border-b-indigo-400 hover:z-[20] focus-within:z-[30]">
       
       <!-- Icon & Label Header -->
       <div class="flex items-center justify-between mb-8">
@@ -32,21 +47,13 @@ defineEmits(['setHomeroom']);
       <!-- Selection Area -->
       <div class="flex-1 flex flex-col gap-2">
         <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none ml-1 italic">Pilih Wali Kelas</label>
-        <div class="relative group-hover:scale-[1.01] transition-transform duration-300">
-          <select 
-            class="w-full p-4 border-2 border-slate-50 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-800/80 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-100 outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-8 focus:ring-indigo-500/5 transition-all appearance-none cursor-pointer"
-            :value="homerooms[cls] || ''" 
-            @change="$emit('setHomeroom', cls, $event.target.value)"
-          >
-            <option value="" class="dark:bg-slate-900">-- Pilih Guru --</option>
-            <option v-for="t in teachers" :key="t.id" :value="t.id" class="dark:bg-slate-900 font-medium py-2" 
-              :disabled="getTeacherHomeroomClass(t.id) && getTeacherHomeroomClass(t.id) !== cls">
-              {{ t.name }}
-            </option>
-          </select>
-          <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500 transition-colors group-hover:text-indigo-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-          </div>
+        <div class="relative group-hover:scale-[1.01] transition-transform duration-300 z-[1] focus-within:z-[10]">
+          <AppSelect 
+            placeholder="-- Pilih Guru --"
+            :modelValue="homerooms[cls] || ''" 
+            :options="getTeacherOptions(cls)"
+            @update:modelValue="$emit('setHomeroom', cls, $event)"
+          />
         </div>
       </div>
       

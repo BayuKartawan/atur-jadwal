@@ -2,7 +2,7 @@
 import { 
   Info, User, HelpCircle, Cpu, 
   CheckCircle2, Code2, Database, Layers, 
-  ExternalLink, Github, Mail, Globe 
+  ExternalLink, Github, Mail, Globe, PlayCircle 
 } from 'lucide-vue-next';
 import AppCard from '../components/ui/AppCard.vue';
 import AppBadge from '../components/ui/AppBadge.vue';
@@ -60,12 +60,12 @@ const steps = [
             <div class="flex flex-col items-center text-center space-y-4">
               <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-1 shadow-lg shadow-indigo-500/20">
                 <div class="w-full h-full rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-2xl uppercase">
-                  BD
+                  <img src="/logo.png" alt="" class="rounded-xl w-full h-full">
                 </div>
               </div>
               <div>
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Bayu Developer</h3>
-                <p class="text-sm text-slate-500 dark:text-slate-500 font-medium">Fullstack Developer</p>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">BayuGo Go</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-500 font-medium">Pemecut AI Handal</p>
               </div>
               
               <div class="flex gap-2 w-full pt-4">
@@ -111,6 +111,36 @@ const steps = [
           </div>
         </div>
 
+      </div>
+
+      <!-- Video Tutorial Section -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3">
+          <div class="p-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+            <PlayCircle :size="20" />
+          </div>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Video Tutorial</h2>
+        </div>
+
+        <AppCard class="p-0 overflow-hidden">
+          <div class="aspect-video w-full bg-slate-900">
+            <iframe 
+              class="w-full h-full"
+              src="https://www.youtube.com/embed/YOUR_VIDEO_ID" 
+              title="Tutorial Smart Schedule" 
+              frameborder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerpolicy="strict-origin-when-cross-origin" 
+              allowfullscreen
+            ></iframe>
+          </div>
+          <div class="p-6 bg-slate-50/50 dark:bg-slate-800/30">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-2">Panduan Lengkap Penggunaan Smart Schedule</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              Tonton video tutorial ini untuk memahami cara menggunakan aplikasi Smart Schedule secara lengkap, mulai dari input data master hingga penyusunan jadwal otomatis.
+            </p>
+          </div>
+        </AppCard>
       </div>
 
       <!-- Teknologi Section -->

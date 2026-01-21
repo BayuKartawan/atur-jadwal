@@ -1,6 +1,9 @@
 <template>
-  <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-all duration-300">
-    <div v-if="$slots.header" class="px-8 py-6 border-b border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
+  <div :class="[
+    'bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all duration-300',
+    overflowVisible ? 'overflow-visible' : 'overflow-hidden'
+  ]">
+    <div v-if="$slots.header" class="px-8 py-6 border-b border-slate-50 dark:border-slate-800/50 flex items-center justify-between transition-all">
       <slot name="header"></slot>
     </div>
     <div :class="['p-8', bodyClass]">
@@ -17,6 +20,10 @@ defineProps({
   bodyClass: {
     type: String,
     default: ''
+  },
+  overflowVisible: {
+    type: Boolean,
+    default: false
   }
 });
 </script>

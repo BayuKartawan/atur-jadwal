@@ -21,9 +21,9 @@ const handleAdd = () => {
 </script>
 
 <template>
-  <AppCard>
+  <AppCard bodyClass="!p-4 lg:!p-6">
     <template #header>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-sky-600 dark:text-sky-400">
           <Layers :size="24" />
         </div>

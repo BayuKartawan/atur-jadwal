@@ -1,6 +1,7 @@
 <script setup>
-import { FileBarChart } from 'lucide-vue-next';
+import { FileBarChart, Download } from 'lucide-vue-next';
 import AppBadge from '../ui/AppBadge.vue';
+import AppButton from '../ui/AppButton.vue';
 
 const props = defineProps({
   teachers: Array,
@@ -8,6 +9,47 @@ const props = defineProps({
   getTeacherHomeroomClass: Function,
   getUsedJtm: Function
 });
+
+const downloadRecap = () => {
+  if (!window.XLSX) {
+    alert("Excel library not loaded.");
+    return;
+  }
+  
+  const headers = ['Nama Guru', 'Wali Kelas', 'Total JTM', 'Terisi', 'Persentase'];
+  const data = props.teachers.map(t => {
+    const homeroom = props.getTeacherHomeroomClass(t.id) ? `Kelas ${props.getTeacherHomeroomClass(t.id)}` : '-';
+    
+    const teacherAllocations = props.allocations.filter(a => a.teacherId === t.id);
+    const totalJtm = teacherAllocations.reduce((s, a) => s + a.jtm, 0);
+    const filledJtm = teacherAllocations.reduce((s, a) => s + props.getUsedJtm(a.id), 0);
+    const percentage = totalJtm > 0 ? Math.round((filledJtm / totalJtm) * 100) : 0;
+    
+    return [
+        t.name,
+        homeroom,
+        totalJtm,
+        filledJtm,
+        `${percentage}%`
+    ];
+  });
+  
+  const wsData = [headers, ...data];
+  const wb = window.XLSX.utils.book_new();
+  const ws = window.XLSX.utils.aoa_to_sheet(wsData);
+  
+  // Auto-width columns
+  const colWidths = headers.map(h => ({wch: h.length + 5}));
+  colWidths[0] = {wch: 40}; // Name column
+  ws['!cols'] = colWidths;
+
+  window.XLSX.utils.book_append_sheet(wb, ws, "Rekap JTM");
+  
+  const now = new Date();
+  const date = now.toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+  const time = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/:/g, '.');
+  window.XLSX.writeFile(wb, `Rekap_JTM_Guru_${date}_${time}.xlsx`);
+};
 </script>
 
 <template>
@@ -25,6 +67,15 @@ const props = defineProps({
             <p class="text-[9px] lg:text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-1.5 lg:mt-2 uppercase tracking-[0.2em] flex items-center gap-2">
               <span class="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-emerald-500 animate-pulse"></span> Laporan Beban Mengajar
             </p>
+          </div>
+          <div class="ml-auto">
+            <AppButton @click="downloadRecap" variant="primary" class="!rounded-xl !py-2.5 !px-4 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
+              <template #icon-left>
+                <Download :size="16" />
+              </template>
+              <span class="hidden lg:inline text-xs font-bold uppercase tracking-wider">Download Excel</span>
+              <span class="lg:hidden text-xs font-bold uppercase tracking-wider">Excel</span>
+            </AppButton>
           </div>
         </div>
       </div>

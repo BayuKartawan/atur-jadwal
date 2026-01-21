@@ -1,18 +1,21 @@
 <script setup>
-import { reactive } from 'vue';
-import { Plus, Trash2, BookOpen } from 'lucide-vue-next';
+import { ref, reactive } from 'vue';
+import { Plus, Trash2, BookOpen, Pencil, Check, X } from 'lucide-vue-next';
 import AppCard from '../ui/AppCard.vue';
 import AppButton from '../ui/AppButton.vue';
 import AppInput from '../ui/AppInput.vue';
 import AppBadge from '../ui/AppBadge.vue';
+import AppSelect from '../ui/AppSelect.vue';
 
 const props = defineProps({
   subjects: Array
 });
 
-const emit = defineEmits(['add', 'remove']);
+const emit = defineEmits(['add', 'remove', 'update']);
 
 const newSubject = reactive({ name: '', type: 'umum' });
+const editingId = ref(null);
+const editSubject = reactive({ name: '', type: 'umum' });
 
 const handleAdd = () => {
   if (!newSubject.name.trim()) return;
@@ -20,12 +23,34 @@ const handleAdd = () => {
   newSubject.name = '';
   newSubject.type = 'umum';
 };
+
+const startEdit = (s) => {
+  editingId.value = s.id;
+  editSubject.name = s.name;
+  editSubject.type = s.type;
+};
+
+const cancelEdit = () => {
+  editingId.value = null;
+};
+
+const handleUpdate = () => {
+  if (!editSubject.name.trim()) return;
+  emit('update', { id: editingId.value, data: { ...editSubject } });
+  editingId.value = null;
+};
+
+const typeOptions = [
+  { label: 'UMUM', value: 'umum' },
+  { label: 'AGAMA', value: 'agama' },
+  { label: 'MULOK', value: 'mulok' }
+];
 </script>
 
 <template>
-  <AppCard>
+  <AppCard bodyClass="!p-4 lg:!p-6" overflowVisible>
     <template #header>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400">
           <BookOpen :size="24" />
         </div>
@@ -45,12 +70,12 @@ const handleAdd = () => {
           class="flex-1 w-full"
         >
           <template #suffix>
-            <div class="flex bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-              <select class="px-3 py-1.5 text-[10px] font-black bg-transparent border-none outline-none appearance-none cursor-pointer text-slate-600 dark:text-slate-300 uppercase tracking-widest" v-model="newSubject.type">
-                <option value="umum" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">UMUM</option>
-                <option value="agama" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">AGAMA</option>
-                <option value="mulok" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">MULOK</option>
-              </select>
+            <div class="w-32">
+              <AppSelect 
+                v-model="newSubject.type"
+                :options="typeOptions"
+                class="!rounded-xl"
+              />
             </div>
           </template>
         </AppInput>
@@ -69,20 +94,56 @@ const handleAdd = () => {
           leave-to-class="opacity-0 scale-95"
         >
           <div v-for="s in subjects" :key="s.id" 
-            class="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl group hover:border-amber-200 dark:hover:border-amber-500 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 transition-all">
+            class="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl group hover:border-amber-200 dark:hover:border-amber-500 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 transition-all relative overflow-visible hover:z-[10] focus-within:z-[20]">
             <div class="flex items-center gap-4 min-w-0 flex-1 mr-4">
               <div class="w-1.5 h-10 rounded-full shrink-0" 
                 :class="s.type==='agama'?'bg-purple-500':s.type==='umum'?'bg-emerald-500':'bg-orange-500'"></div>
-              <div class="min-w-0 flex-1">
+              
+              <div v-if="editingId === s.id" class="flex-1 flex flex-col sm:flex-row gap-2">
+                <AppInput 
+                  v-model="editSubject.name" 
+                  size="sm" 
+                  class="flex-1"
+                  @keyup.enter="handleUpdate"
+                  @keyup.esc="cancelEdit"
+                  autofocus
+                >
+                  <template #suffix>
+                    <div class="w-32">
+                      <AppSelect 
+                        v-model="editSubject.type"
+                        :options="typeOptions"
+                        class="!rounded-xl"
+                      />
+                    </div>
+                  </template>
+                </AppInput>
+              </div>
+              <div v-else class="min-w-0 flex-1">
                 <span class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white block transition-colors truncate">{{ s.name }}</span>
                 <AppBadge :variant="s.type==='agama'?'info' : s.type==='umum'?'success' : 'warning'">
                   {{ s.type }}
                 </AppBadge>
               </div>
             </div>
-            <AppButton @click="$emit('remove', s.id)" variant="danger" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
-              <Trash2 :size="16" />
-            </AppButton>
+            <div class="flex gap-2">
+              <template v-if="editingId === s.id">
+                <AppButton @click="handleUpdate" variant="success" size="icon" class="!p-2 !rounded-xl shrink-0">
+                  <Check :size="16" />
+                </AppButton>
+                <AppButton @click="cancelEdit" variant="ghost" size="icon" class="!p-2 !rounded-xl shrink-0">
+                  <X :size="16" />
+                </AppButton>
+              </template>
+              <template v-else>
+                <AppButton @click="startEdit(s)" variant="ghost" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
+                  <Pencil :size="16" />
+                </AppButton>
+                <AppButton @click="$emit('remove', s.id)" variant="danger" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
+                  <Trash2 :size="16" />
+                </AppButton>
+              </template>
+            </div>
           </div>
         </TransitionGroup>
         

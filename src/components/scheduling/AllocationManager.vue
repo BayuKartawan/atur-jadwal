@@ -4,6 +4,7 @@ import { Filter, Trash2, Plus, Search, X, RotateCcw } from 'lucide-vue-next';
 import AppCard from '../ui/AppCard.vue';
 import AppButton from '../ui/AppButton.vue';
 import AppBadge from '../ui/AppBadge.vue';
+import AppSelect from '../ui/AppSelect.vue';
 
 const props = defineProps({
   teachers: Array,
@@ -45,7 +46,22 @@ const finalAllocations = computed(() => {
       return subject.includes(query) || teacher.includes(query) || cls.includes(query);
     });
   }
-  return result;
+  return result.sort((a, b) => {
+    const subjA = props.getAllocDetails(a.id)?.subjectName?.toLowerCase() || '';
+    const subjB = props.getAllocDetails(b.id)?.subjectName?.toLowerCase() || '';
+    return subjA.localeCompare(subjB);
+  });
+});
+
+const filteredSubjects = computed(() => {
+  const teacherId = props.allocForm?.teacherId;
+  const isHomeroom = teacherId && props.getTeacherHomeroomClass(teacherId);
+  
+  if (isHomeroom) {
+    return props.subjects.filter(s => s.type === 'umum' || s.type === 'mulok');
+  }
+  
+  return props.subjects;
 });
 
 const hasFilters = computed(() => {
@@ -57,44 +73,66 @@ const clearFilters = () => {
   emit('update:filterTeacher', 'all');
   searchQuery.value = '';
 };
+
+const teacherOptions = computed(() => {
+  return props.teachers.map(t => ({ label: t.name, value: t.id }));
+});
+
+const subjectOptions = computed(() => {
+  return filteredSubjects.value.map(s => ({ label: s.name, value: s.id }));
+});
+
+const classOptions = computed(() => {
+  return props.classes.map(c => ({ label: `Kelas ${c}`, value: c }));
+});
+
+const filterClassOptions = computed(() => {
+  return [
+    { label: 'Semua Kelas', value: 'all' },
+    ...props.classes.map(c => ({ label: `Kelas ${c}`, value: c }))
+  ];
+});
+
+const filterTeacherOptions = computed(() => {
+  return [
+    { label: 'Semua Guru', value: 'all' },
+    ...props.teachers.map(t => ({ label: t.name, value: t.id }))
+  ];
+});
 </script>
 
 <template>
   <div class="p-4 lg:p-8 flex flex-col h-auto lg:h-full min-h-full bg-slate-50/50 dark:bg-slate-950/50">
     <!-- Add Allocation Form -->
-    <AppCard class="mb-8">
+    <AppCard class="mb-8" overflowVisible>
 
       <div class="grid grid-cols-2 md:grid-cols-12 gap-4 lg:gap-6 items-end">
-        <div class="col-span-2 md:col-span-4 flex flex-col gap-1.5">
-          <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Pilih
-            Guru</label>
-          <select
-            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-            :value="allocForm.teacherId" @change="$emit('teacherChange', $event.target.value)">
-            <option value="">-- Pilih Guru --</option>
-            <option v-for="t in teachers" :key="t.id" :value="t.id">{{ t.name }}</option>
-          </select>
+        <div class="col-span-2 md:col-span-4">
+          <AppSelect 
+            label="Pilih Guru"
+            :modelValue="allocForm.teacherId"
+            :options="teacherOptions"
+            placeholder="-- Pilih Guru --"
+            @update:modelValue="$emit('teacherChange', $event)"
+          />
         </div>
-        <div class="col-span-2 md:col-span-3 flex flex-col gap-1.5">
-          <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Mata
-            Pelajaran</label>
-          <select
-            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all disabled:opacity-50"
-            v-model="allocForm.subjectId" :disabled="!allocForm.teacherId">
-            <option value="">-- Pilih Mapel --</option>
-            <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
+        <div class="col-span-2 md:col-span-3">
+          <AppSelect 
+            label="Mata Pelajaran"
+            v-model="allocForm.subjectId"
+            :options="subjectOptions"
+            placeholder="-- Pilih Mapel --"
+            :disabled="!allocForm.teacherId"
+          />
         </div>
-        <div class="col-span-1 md:col-span-2 flex flex-col gap-1.5">
-          <label
-            class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Kelas</label>
-          <select
-            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all disabled:opacity-50"
+        <div class="col-span-1 md:col-span-2">
+          <AppSelect 
+            label="Kelas"
             v-model="allocForm.classId"
-            :disabled="!!getTeacherHomeroomClass(allocForm.teacherId) || !allocForm.teacherId">
-            <option value="">-- Pilih Kelas --</option>
-            <option v-for="c in classes" :key="c" :value="c">Kelas {{ c }}</option>
-          </select>
+            :options="classOptions"
+            placeholder="-- Pilih Kelas --"
+            :disabled="!!getTeacherHomeroomClass(allocForm.teacherId) || !allocForm.teacherId"
+          />
         </div>
         <div class="col-span-1 md:col-span-1 flex flex-col gap-1.5">
           <label
@@ -107,7 +145,7 @@ const clearFilters = () => {
         <div class="col-span-2 md:col-span-2">
           <AppButton @click="$emit('add')" variant="success"
             class="w-full !py-3.5 !rounded-2xl !bg-emerald-600 dark:!bg-emerald-500 hover:!bg-emerald-700 dark:hover:!bg-emerald-400 !text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40 transition-all duration-300 group active:scale-95 disabled:!bg-slate-200 dark:disabled:!bg-slate-800 disabled:!text-slate-400"
-            :disabled="!allocForm.teacherId || !allocForm.subjectId || !allocForm.classId">
+            :disabled="!allocForm.teacherId || !allocForm.subjectId || !allocForm.classId || allocForm.jtm <= 0">
             <template #icon-left>
               <Plus :size="20" class="group-hover:rotate-90 transition-transform duration-300" />
             </template>
@@ -132,42 +170,46 @@ const clearFilters = () => {
           </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-           <!-- Search Input -->
-           <div class="relative w-full sm:flex-1 xl:w-64 group">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" :size="16" />
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Cari mapel, guru, kelas..." 
-              class="w-full pl-10 pr-8 py-2.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
-            />
-            <button 
-              v-if="searchQuery" 
-              @click="searchQuery = ''" 
-              class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
-            >
-              <X :size="12" stroke-width="3" />
-            </button>
+        <div class="flex flex-col gap-3 w-full xl:flex-row xl:items-center xl:w-auto">
+           <!-- Search and Mobile Reset -->
+           <div class="flex items-center gap-2 w-full xl:w-80">
+             <div class="relative flex-1 group">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" :size="16" />
+              <input 
+                v-model="searchQuery" 
+                type="text" 
+                placeholder="Cari mapel, guru, kelas..." 
+                class="w-full pl-10 pr-8 py-2.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+              />
+              <button 
+                v-if="searchQuery" 
+                @click="searchQuery = ''" 
+                class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
+              >
+                <X :size="12" stroke-width="3" />
+              </button>
+             </div>
            </div>
           
-           <div class="flex items-center gap-2 w-full sm:w-auto">
-             <div
-               class="flex items-center gap-3 p-1.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex-1 sm:flex-none overflow-x-auto min-w-0">
-               <select
-                 class="bg-transparent px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 outline-none hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex-1 lg:flex-none min-w-[100px]"
-                 :value="filterClass" @change="$emit('update:filterClass', $event.target.value)">
-                 <option value="all" class="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">Semua Kelas</option>
-                 <option v-for="c in classes" :key="c" :value="c" class="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">Kelas {{ c }}</option>
-               </select>
-               <div class="h-4 w-px bg-slate-100 dark:bg-slate-800 shrink-0"></div>
-               <select
-                 class="bg-transparent px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 outline-none hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex-1 lg:flex-none min-w-[100px]"
-                 :value="filterTeacher" @change="$emit('update:filterTeacher', $event.target.value)">
-                 <option value="all" class="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">Semua Guru</option>
-                 <option v-for="t in teachers" :key="t.id" :value="t.id" class="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">{{ t.name }}</option>
-               </select>
-             </div>
+           <!-- Dropdowns and Desktop Reset -->
+           <div class="flex items-center gap-2 w-full xl:w-auto">
+              <div class="flex flex-row items-center gap-1.5 p-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex-1 xl:flex-none">
+                <AppSelect 
+                  :modelValue="filterClass"
+                  :options="filterClassOptions"
+                  size="sm"
+                  class="w-28 sm:w-32 !bg-transparent !border-0"
+                  @update:modelValue="$emit('update:filterClass', $event)"
+                />
+                <div class="h-4 w-px bg-slate-100 dark:bg-slate-800 shrink-0"></div>
+                <AppSelect 
+                  :modelValue="filterTeacher"
+                  :options="filterTeacherOptions"
+                  size="sm"
+                  class="flex-1 sm:!min-w-[160px] !bg-transparent !border-0"
+                  @update:modelValue="$emit('update:filterTeacher', $event)"
+                />
+              </div>
   
              <AppButton 
                 v-if="hasFilters"
@@ -189,7 +231,7 @@ const clearFilters = () => {
           enter-from-class="opacity-0 translate-y-4" enter-to-class="opacity-100 translate-y-0"
           leave-active-class="transition duration-200 ease-in absolute">
           <div v-for="a in finalAllocations" :key="a.id"
-            class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 lg:p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col h-full relative group overflow-visible">
+            class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 lg:p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col h-full relative group overflow-visible hover:z-[10] focus-within:z-[20]">
 
             <!-- Trash Action (Visible on Hover) -->
             <button @click="confirmRemove(a.id)"

@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { Plus, Trash2, User } from 'lucide-vue-next';
+import { Plus, Trash2, User, Pencil, Check, X } from 'lucide-vue-next';
 import AppCard from '../ui/AppCard.vue';
 import AppButton from '../ui/AppButton.vue';
 import AppInput from '../ui/AppInput.vue';
@@ -11,21 +11,40 @@ const props = defineProps({
   getTeacherHomeroomClass: Function
 });
 
-const emit = defineEmits(['add', 'remove']);
+const emit = defineEmits(['add', 'remove', 'update']);
 
 const newTeacher = ref('');
+const editingId = ref(null);
+const editName = ref('');
 
 const handleAdd = () => {
   if (!newTeacher.value.trim()) return;
   emit('add', newTeacher.value);
   newTeacher.value = '';
 };
+
+const startEdit = (t) => {
+  editingId.value = t.id;
+  editName.value = t.name;
+};
+
+const cancelEdit = () => {
+  editingId.value = null;
+  editName.value = '';
+};
+
+const handleUpdate = () => {
+  if (!editName.value.trim()) return;
+  emit('update', { id: editingId.value, name: editName.value });
+  editingId.value = null;
+  editName.value = '';
+};
 </script>
 
 <template>
-  <AppCard>
+  <AppCard bodyClass="!p-4 lg:!p-6">
     <template #header>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
           <User :size="24" />
         </div>
@@ -61,19 +80,44 @@ const handleAdd = () => {
           <div v-for="t in teachers" :key="t.id" 
             class="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl group hover:border-indigo-200 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-all">
             <div class="flex items-center gap-3 min-w-0 flex-1 mr-4">
-              <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs uppercase group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0">
+              <div class="hidden lg:flex w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-xs uppercase group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors shrink-0">
                 {{ t.name.charAt(0) }}
               </div>
-              <span class="font-bold text-slate-700 dark:text-slate-300 transition-colors group-hover:text-slate-900 dark:group-hover:text-white truncate">
+              <div v-if="editingId === t.id" class="flex-1 flex gap-2">
+                <AppInput 
+                  v-model="editName" 
+                  size="sm" 
+                  class="flex-1"
+                  @keyup.enter="handleUpdate"
+                  @keyup.esc="cancelEdit"
+                  autofocus
+                />
+              </div>
+              <span v-else class="font-bold text-slate-700 dark:text-slate-300 transition-colors group-hover:text-slate-900 dark:group-hover:text-white truncate">
                 {{ t.name }}
                 <AppBadge v-if="getTeacherHomeroomClass(t.id)" variant="success" class="ml-2 inline-flex">
                   Wali {{ getTeacherHomeroomClass(t.id) }}
                 </AppBadge>
               </span>
             </div>
-            <AppButton @click="$emit('remove', t.id)" variant="danger" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
-              <Trash2 :size="16" />
-            </AppButton>
+            <div class="flex gap-2">
+              <template v-if="editingId === t.id">
+                <AppButton @click="handleUpdate" variant="success" size="icon" class="!p-2 !rounded-xl shrink-0">
+                  <Check :size="16" />
+                </AppButton>
+                <AppButton @click="cancelEdit" variant="ghost" size="icon" class="!p-2 !rounded-xl shrink-0">
+                  <X :size="16" />
+                </AppButton>
+              </template>
+              <template v-else>
+                <AppButton @click="startEdit(t)" variant="ghost" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
+                  <Pencil :size="16" />
+                </AppButton>
+                <AppButton @click="$emit('remove', t.id)" variant="danger" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
+                  <Trash2 :size="16" />
+                </AppButton>
+              </template>
+            </div>
           </div>
         </TransitionGroup>
         

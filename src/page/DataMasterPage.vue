@@ -13,15 +13,15 @@ const props = defineProps({
   getTeacherHomeroomClass: Function
 });
 
-const emit = defineEmits(['addTeacher', 'removeTeacher', 'addSubject', 'removeSubject', 'addClass', 'removeClass']);
+const emit = defineEmits(['addTeacher', 'removeTeacher', 'updateTeacher', 'addSubject', 'removeSubject', 'updateSubject', 'addClass', 'removeClass']);
 
 const masterSubTab = ref('guru');
 </script>
 
 <template>
-  <div class="p-4 lg:p-8 flex flex-col h-full overflow-hidden">
+  <div class="p-2 lg:p-4 flex flex-col h-full overflow-hidden">
     <!-- Tabs Navigation -->
-    <div class="flex gap-2 lg:gap-4 mb-6 lg:mb-8 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm w-full lg:w-fit shrink-0 overflow-x-auto custom-scrollbar">
+    <div class="flex gap-2 lg:gap-4 mb-4 lg:mb-6 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm w-full lg:w-fit shrink-0 overflow-x-auto custom-scrollbar">
       <AppButton 
         v-for="tab in [
           { id: 'guru', label: 'Guru', icon: User },
@@ -49,12 +49,14 @@ const masterSubTab = ref('guru');
         :getTeacherHomeroomClass="getTeacherHomeroomClass" 
         @add="$emit('addTeacher', $event)" 
         @remove="$emit('removeTeacher', $event)" 
+        @update="$emit('updateTeacher', $event.id, $event.name)"
       />
       <SubjectManager 
         v-if="masterSubTab === 'mapel'" 
         :subjects="subjects" 
         @add="$emit('addSubject', $event)"
         @remove="$emit('removeSubject', $event)" 
+        @update="$emit('updateSubject', $event.id, $event.data)"
       />
       <ClassManager 
         v-if="masterSubTab === 'kelas'" 

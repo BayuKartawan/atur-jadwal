@@ -19,12 +19,13 @@ const props = defineProps({
   getSlot: Function,
   getAllocDetails: Function,
   getUsedJtm: Function,
-  isSlotDisabled: Function
+  isSlotDisabled: Function,
+  isAppHeaderVisible: Boolean
 });
 
 const emit = defineEmits([
-  'toggleDisableMode', 'autoSchedule', 'update:taskClassFilter', 
-  'update:taskSearchQuery', 'selectAlloc', 'resetSlots', 'cellClick', 'resetSchedule'
+  'toggleDisableMode', 'autoSchedule', 'update:taskClassFilter',
+  'update:taskSearchQuery', 'selectAlloc', 'resetSlots', 'cellClick', 'resetSchedule', 'toggleAppHeader'
 ]);
 
 const isSidebarOpen = ref(true);
@@ -34,56 +35,33 @@ const toggleSidebar = () => isSidebarOpen.value = !isSidebarOpen.value;
 <template>
   <div class="flex flex-col lg:flex-row h-full overflow-hidden relative">
     <!-- Mobile Toggle Button -->
-    <button 
-      @click="toggleSidebar"
-      class="lg:hidden fixed bottom-6 right-6 z-50 p-4 bg-indigo-600 text-white rounded-2xl shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase"
-    >
+    <button @click="toggleSidebar"
+      class="lg:hidden fixed bottom-6 right-6 z-50 p-4 bg-indigo-600 text-white rounded-2xl shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase">
       <PanelLeftOpen v-if="!isSidebarOpen" :size="20" />
       <PanelLeftClose v-else :size="20" />
       <span>{{ isSidebarOpen ? 'Sembunyikan Panel' : 'Buka Panel' }}</span>
     </button>
 
-    <TaskSidebar 
-      :is-open="isSidebarOpen"
-      @update:is-open="isSidebarOpen = $event"
-      :isDisableMode="isDisableMode" 
-      :isGenerating="isGenerating" 
-      :classes="classes"
-      :taskClassFilter="taskClassFilter" 
-      :taskSearchQuery="taskSearchQuery" 
-      :taskSidebarClasses="taskSidebarClasses"
-      :isTaskResultsEmpty="isTaskResultsEmpty" 
-      :allocations="allocations" 
-      :getAllocDetails="getAllocDetails"
-      :getUsedJtm="getUsedJtm" 
-      :selectedAllocation="selectedAllocation"
-      @toggleDisableMode="$emit('toggleDisableMode')" 
-      @autoSchedule="$emit('autoSchedule')"
-      @resetSchedule="$emit('resetSchedule')"
-      @update:taskClassFilter="$emit('update:taskClassFilter', $event)" 
+    <TaskSidebar :is-open="isSidebarOpen" @update:is-open="isSidebarOpen = $event" :isDisableMode="isDisableMode"
+      :classes="classes" :taskClassFilter="taskClassFilter" :taskSearchQuery="taskSearchQuery"
+      :taskSidebarClasses="taskSidebarClasses" :isTaskResultsEmpty="isTaskResultsEmpty" :allocations="allocations"
+      :getAllocDetails="getAllocDetails" :getUsedJtm="getUsedJtm" :selectedAllocation="selectedAllocation"
+      @update:taskClassFilter="$emit('update:taskClassFilter', $event)"
       @update:taskSearchQuery="$emit('update:taskSearchQuery', $event)"
-      @selectAlloc="(a) => { $emit('selectAlloc', a); if (window.innerWidth < 1024) isSidebarOpen = false; }" 
-      @resetSlots="$emit('resetSlots', $event)" 
-    />
+      @selectAlloc="(a) => { $emit('selectAlloc', a); if (window.innerWidth < 1024) isSidebarOpen = false; }"
+      @resetSlots="$emit('resetSlots', $event)" />
 
     <div class="flex-1 h-full overflow-hidden flex flex-col min-w-0">
-      <ScheduleGrid 
-        :DAYS="DAYS" 
-        :PERIOD_TIMES="PERIOD_TIMES" 
-        :classes="classes" 
-        :isSlotDisabled="isSlotDisabled"
-        :getSlot="getSlot" 
-        :getAllocDetails="getAllocDetails" 
-        :isDisableMode="isDisableMode"
-        @cellClick="(d, p, c) => $emit('cellClick', d, p, c)" 
-      />
+      <ScheduleGrid :DAYS="DAYS" :PERIOD_TIMES="PERIOD_TIMES" :classes="classes" :isSlotDisabled="isSlotDisabled"
+        :getSlot="getSlot" :getAllocDetails="getAllocDetails" :isDisableMode="isDisableMode"
+        :isGenerating="isGenerating" :selectedAllocation="selectedAllocation" :isAppHeaderVisible="isAppHeaderVisible"
+        @cellClick="(d, p, c) => $emit('cellClick', d, p, c)" @toggleDisableMode="$emit('toggleDisableMode')"
+        @autoSchedule="$emit('autoSchedule')" @resetSchedule="$emit('resetSchedule')"
+        @toggleAppHeader="$emit('toggleAppHeader')" />
     </div>
 
     <!-- Overlay for mobile when sidebar is open -->
-    <div 
-      v-if="isSidebarOpen" 
-      @click="isSidebarOpen = false" 
-      class="lg:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-10 transition-opacity"
-    ></div>
+    <div v-if="isSidebarOpen" @click="isSidebarOpen = false"
+      class="lg:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-10 transition-opacity"></div>
   </div>
 </template>

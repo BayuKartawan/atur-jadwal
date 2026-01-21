@@ -1,5 +1,5 @@
 <script setup>
-import { DatabaseBackup, RefreshCw, Download, Sun, Moon, Sparkles, Menu, X, Trash2 } from 'lucide-vue-next';
+import { DatabaseBackup, RefreshCw, Download, Sparkles, Menu, X, Trash2 } from 'lucide-vue-next';
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AppButton from '../ui/AppButton.vue';
@@ -13,28 +13,24 @@ defineProps({
 defineEmits(['backup', 'restore', 'export', 'toggleSidebar']);
 
 const route = useRoute();
-const isDark = ref(false);
 const showClearConfirm = ref(false);
 
-const toggleDark = () => {
-  isDark.value = !isDark.value;
-  if (isDark.value) {
-    document.documentElement.classList.add('dark');
-    localStorage.theme = 'dark';
-  } else {
-    document.documentElement.classList.remove('dark');
-    localStorage.theme = 'light';
-  }
-};
-
 onMounted(() => {
-  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    isDark.value = true;
+  // Always respect system preference
+  if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.documentElement.classList.add('dark');
   } else {
-    isDark.value = false;
     document.documentElement.classList.remove('dark');
   }
+  
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    if (event.matches) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  });
 });
 
 const handleClearData = () => {
@@ -42,11 +38,7 @@ const handleClearData = () => {
 };
 
 const confirmClearData = () => {
-  const currentTheme = localStorage.getItem('theme');
   localStorage.clear();
-  if (currentTheme) {
-    localStorage.setItem('theme', currentTheme);
-  }
   showClearConfirm.value = false;
   window.location.reload();
 };
@@ -88,13 +80,6 @@ const pageTitle = computed(() => {
     </div>
     
     <div class="flex items-center gap-1.5 md:gap-3 p-0.5 md:p-1 overflow-x-auto no-scrollbar">
-      <AppButton @click="toggleDark" variant="secondary" size="icon" class="!rounded-xl border-none bg-slate-50 dark:bg-slate-800 !p-2 md:!p-2.5">
-        <Sun v-if="isDark" :size="18" />
-        <Moon v-else :size="18" />
-      </AppButton>
-      
-      <div class="hidden md:block h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
-
       <AppButton @click="$emit('backup')" variant="secondary" size="md" class="border-none bg-slate-50 dark:bg-slate-800 !p-2 md:!p-2.5 md:!px-4 hover:!bg-indigo-50 dark:hover:!bg-indigo-900/40">
         <template #icon-left><DatabaseBackup :size="14" /></template>
         <span class="hidden md:inline">Backup</span>

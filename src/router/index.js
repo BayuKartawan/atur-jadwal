@@ -15,7 +15,7 @@ const routes = [
         children: [
             {
                 path: '',
-                redirect: '/schedule'
+                redirect: '/about'
             },
             {
                 path: 'schedule',

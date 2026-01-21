@@ -35,11 +35,11 @@ const toggleSidebar = () => isSidebarOpen.value = !isSidebarOpen.value;
 <template>
   <div class="flex flex-col lg:flex-row h-full overflow-hidden relative">
     <!-- Mobile Toggle Button -->
+    <!-- Mobile Toggle Button -->
     <button @click="toggleSidebar"
-      class="lg:hidden fixed bottom-6 right-6 z-50 p-4 bg-indigo-600 text-white rounded-2xl shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase">
+      class="lg:hidden fixed bottom-6 right-6 z-50 p-3 bg-indigo-600 text-white rounded-full shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center">
       <PanelLeftOpen v-if="!isSidebarOpen" :size="20" />
       <PanelLeftClose v-else :size="20" />
-      <span>{{ isSidebarOpen ? 'Sembunyikan Panel' : 'Buka Panel' }}</span>
     </button>
 
     <TaskSidebar :is-open="isSidebarOpen" @update:is-open="isSidebarOpen = $event" :isDisableMode="isDisableMode"

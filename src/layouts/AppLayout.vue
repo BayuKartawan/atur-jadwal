@@ -7,6 +7,7 @@ import AppModal from "../components/common/AppModal.vue";
 import AppNotification from "../components/common/AppNotification.vue";
 import AppHeader from "../components/layout/AppHeader.vue";
 import AppSidebar from "../components/layout/AppSidebar.vue";
+import ScrollToTop from "../components/ui/ScrollToTop.vue";
 
 // --- CONSTANTS ---
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -804,6 +805,9 @@ const isTaskResultsEmpty = computed(() => {
             @showModal="modal = $event" />
         </router-view>
         <input type="file" ref="fileInputRef" @change="handleUploadExcel" accept=".xlsx, .xls" class="hidden" />
+
+        <!-- Scroll To Top -->
+        <ScrollToTop />
       </main>
     </div>
 

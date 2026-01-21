@@ -10,7 +10,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="h-full overflow-hidden">
+  <div class="h-full overflow-y-auto lg:overflow-hidden custom-scrollbar">
     <JtmRecap 
       :teachers="teachers" 
       :allocations="allocations"

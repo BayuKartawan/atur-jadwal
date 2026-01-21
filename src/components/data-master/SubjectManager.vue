@@ -37,29 +37,29 @@ const handleAdd = () => {
     </template>
 
     <div class="flex flex-col gap-6">
-      <div class="flex gap-3">
+      <div class="flex flex-col sm:flex-row gap-3">
         <AppInput 
           v-model="newSubject.name" 
           placeholder="Nama Mapel..." 
           @keyup.enter="handleAdd"
-          class="flex-1"
+          class="flex-1 w-full"
         >
           <template #suffix>
-            <div class="flex bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 overflow-hidden">
+            <div class="flex bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
               <select class="px-3 py-1.5 text-[10px] font-black bg-transparent border-none outline-none appearance-none cursor-pointer text-slate-600 dark:text-slate-300 uppercase tracking-widest" v-model="newSubject.type">
-                <option value="umum">UMUM</option>
-                <option value="agama">AGAMA</option>
-                <option value="mulok">MULOK</option>
+                <option value="umum" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">UMUM</option>
+                <option value="agama" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">AGAMA</option>
+                <option value="mulok" class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100">MULOK</option>
               </select>
             </div>
           </template>
         </AppInput>
-        <AppButton @click="handleAdd" size="icon" class="w-12 h-12 !p-0 !bg-amber-500 hover:bg-amber-600 shadow-amber-100 dark:shadow-none">
+        <AppButton @click="handleAdd" size="icon" class="w-full sm:w-12 h-12 !p-0 !bg-amber-500 hover:bg-amber-600 shadow-amber-100 dark:shadow-none shrink-0">
           <Plus :size="20" />
         </AppButton>
       </div>
 
-      <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+      <div class="space-y-3">
         <TransitionGroup
           enter-active-class="transition duration-300 ease-out"
           enter-from-class="opacity-0 translate-y-4"
@@ -70,17 +70,17 @@ const handleAdd = () => {
         >
           <div v-for="s in subjects" :key="s.id" 
             class="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl group hover:border-amber-200 dark:hover:border-amber-500 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 transition-all">
-            <div class="flex items-center gap-4">
-              <div class="w-1.5 h-10 rounded-full" 
+            <div class="flex items-center gap-4 min-w-0 flex-1 mr-4">
+              <div class="w-1.5 h-10 rounded-full shrink-0" 
                 :class="s.type==='agama'?'bg-purple-500':s.type==='umum'?'bg-emerald-500':'bg-orange-500'"></div>
-              <div>
-                <span class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white block transition-colors">{{ s.name }}</span>
+              <div class="min-w-0 flex-1">
+                <span class="font-bold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white block transition-colors truncate">{{ s.name }}</span>
                 <AppBadge :variant="s.type==='agama'?'info' : s.type==='umum'?'success' : 'warning'">
                   {{ s.type }}
                 </AppBadge>
               </div>
             </div>
-            <AppButton @click="$emit('remove', s.id)" variant="danger" size="icon" class="lg:opacity-0 group-hover:opacity-100 !p-2 !rounded-xl">
+            <AppButton @click="$emit('remove', s.id)" variant="danger" size="icon" class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 !p-2 !rounded-xl shrink-0">
               <Trash2 :size="16" />
             </AppButton>
           </div>

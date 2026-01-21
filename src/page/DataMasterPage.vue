@@ -19,8 +19,9 @@ const masterSubTab = ref('guru');
 </script>
 
 <template>
-  <div class="p-8 flex flex-col h-full overflow-hidden">
-    <div class="flex gap-4 mb-8 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm w-fit shrink-0">
+  <div class="p-4 lg:p-8 flex flex-col h-full overflow-hidden">
+    <!-- Tabs Navigation -->
+    <div class="flex gap-2 lg:gap-4 mb-6 lg:mb-8 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm w-full lg:w-fit shrink-0 overflow-x-auto custom-scrollbar">
       <AppButton 
         v-for="tab in [
           { id: 'guru', label: 'Guru', icon: User },
@@ -31,7 +32,7 @@ const masterSubTab = ref('guru');
         @click="masterSubTab = tab.id"
         :variant="masterSubTab === tab.id ? 'primary' : 'ghost'"
         size="md"
-        class="!rounded-xl"
+        class="!rounded-xl flex-1 lg:flex-none whitespace-nowrap min-w-[100px]"
       >
         <template #icon-left>
           <component :is="tab.icon" :size="16" />
@@ -40,7 +41,8 @@ const masterSubTab = ref('guru');
       </AppButton>
     </div>
 
-    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-12">
+    <!-- Content Area -->
+    <div class="flex-1 overflow-y-auto pr-0 lg:pr-2 custom-scrollbar pb-20 lg:pb-12">
       <TeacherManager 
         v-if="masterSubTab === 'guru'" 
         :teachers="teachers"

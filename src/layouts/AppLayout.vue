@@ -284,6 +284,15 @@ const handleTeacherChangeInAlloc = (teacherId) => {
 
 const addAllocation = () => {
   if (!allocForm.teacherId || !allocForm.subjectId || !allocForm.classId) return;
+
+  const isDuplicate = allocations.value.some(a => 
+    a.subjectId === allocForm.subjectId && a.classId === allocForm.classId
+  );
+
+  if (isDuplicate) {
+    return showNotification('Mata pelajaran ini sudah ada di kelas tersebut!', 'error');
+  }
+
   allocations.value.push({
     id: generateId(),
     teacherId: allocForm.teacherId,
@@ -507,7 +516,7 @@ const isTaskResultsEmpty = computed(() => {
 </script>
 
 <template>
-  <div class="h-screen bg-white dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 flex overflow-hidden transition-colors duration-300">
+  <div class="h-screen flex flex-col lg:flex-row bg-white dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300">
     <!-- Sidebar -->
     <AppSidebar :isOpen="isSidebarOpen" @close="isSidebarOpen = false" />
 
@@ -540,7 +549,7 @@ const isTaskResultsEmpty = computed(() => {
       <input type="file" ref="restoreInputRef" @change="handleRestore" accept=".json" class="hidden" />
 
       <!-- Main Content Area -->
-      <main class="flex-1 relative overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+      <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
         <router-view v-slot="{ Component }">
           <component 
             :is="Component"
@@ -591,6 +600,7 @@ const isTaskResultsEmpty = computed(() => {
             @uploadExcel="fileInputRef?.click()"
             @updateCurriculum="updateCurriculum"
             @setHomeroom="setHomeroomTeacher"
+            @showModal="modal = $event"
           />
         </router-view>
         <input type="file" ref="fileInputRef" @change="handleUploadExcel" accept=".xlsx, .xls" class="hidden" />

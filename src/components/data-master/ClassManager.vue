@@ -47,7 +47,7 @@ const handleAdd = () => {
         </AppButton>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         <TransitionGroup
           enter-active-class="transition duration-300 ease-out"
           enter-from-class="opacity-0 scale-95"
@@ -63,7 +63,7 @@ const handleAdd = () => {
             </div>
             <span class="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-tight">Kelas {{ cls }}</span>
             
-            <AppButton @click="$emit('remove', cls)" variant="danger" size="icon" class="absolute top-2 right-2 !p-2 !rounded-xl lg:opacity-0 group-hover:opacity-100">
+            <AppButton @click="$emit('remove', cls)" variant="danger" size="icon" class="absolute top-2 right-2 !p-2 !rounded-xl opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
               <Trash2 :size="14" />
             </AppButton>
           </div>

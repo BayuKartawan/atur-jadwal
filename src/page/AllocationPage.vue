@@ -16,12 +16,12 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:filterClass', 'update:filterTeacher', 
-  'add', 'remove', 'teacherChange'
+  'add', 'remove', 'teacherChange', 'showModal'
 ]);
 </script>
 
 <template>
-  <div class="h-full overflow-hidden">
+  <div class="h-full overflow-y-auto lg:overflow-hidden custom-scrollbar">
     <AllocationManager 
       :teachers="teachers" 
       :subjects="subjects" 
@@ -38,6 +38,7 @@ const emit = defineEmits([
       @add="$emit('add')" 
       @remove="$emit('remove', $event)"
       @teacherChange="$emit('teacherChange', $event)" 
+      @showModal="$emit('showModal', $event)"
     />
   </div>
 </template>

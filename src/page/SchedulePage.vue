@@ -1,10 +1,8 @@
 <script setup>
 import { ref } from 'vue';
-import { Settings2, X } from 'lucide-vue-next';
 import TaskSidebar from '../components/scheduling/TaskSidebar.vue';
 import ScheduleGrid from '../components/scheduling/ScheduleGrid.vue';
-
-const showControlPanel = ref(false);
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
 
 const props = defineProps({
   isDisableMode: Boolean,
@@ -28,22 +26,26 @@ const emit = defineEmits([
   'toggleDisableMode', 'autoSchedule', 'update:taskClassFilter', 
   'update:taskSearchQuery', 'selectAlloc', 'resetSlots', 'cellClick', 'resetSchedule'
 ]);
+
+const isSidebarOpen = ref(true);
+const toggleSidebar = () => isSidebarOpen.value = !isSidebarOpen.value;
 </script>
 
 <template>
   <div class="flex flex-col lg:flex-row h-full overflow-hidden relative">
-    <!-- Overlay for mobile when sidebar is open -->
-    <div 
-      v-if="showControlPanel" 
-      @click="showControlPanel = false"
-      class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
-    ></div>
+    <!-- Mobile Toggle Button -->
+    <button 
+      @click="toggleSidebar"
+      class="lg:hidden fixed bottom-6 right-6 z-50 p-4 bg-indigo-600 text-white rounded-2xl shadow-2xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 font-black text-[10px] uppercase"
+    >
+      <PanelLeftOpen v-if="!isSidebarOpen" :size="20" />
+      <PanelLeftClose v-else :size="20" />
+      <span>{{ isSidebarOpen ? 'Sembunyikan Panel' : 'Buka Panel' }}</span>
+    </button>
 
     <TaskSidebar 
-      :class="[
-        'fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:translate-x-0',
-        showControlPanel ? 'translate-x-0' : '-translate-x-full'
-      ]"
+      :is-open="isSidebarOpen"
+      @update:is-open="isSidebarOpen = $event"
       :isDisableMode="isDisableMode" 
       :isGenerating="isGenerating" 
       :classes="classes"
@@ -60,13 +62,12 @@ const emit = defineEmits([
       @resetSchedule="$emit('resetSchedule')"
       @update:taskClassFilter="$emit('update:taskClassFilter', $event)" 
       @update:taskSearchQuery="$emit('update:taskSearchQuery', $event)"
-      @selectAlloc="$emit('selectAlloc', $event)" 
+      @selectAlloc="(a) => { $emit('selectAlloc', a); if (window.innerWidth < 1024) isSidebarOpen = false; }" 
       @resetSlots="$emit('resetSlots', $event)" 
     />
 
-    <div class="flex-1 min-w-0 h-full overflow-hidden flex flex-col relative">
+    <div class="flex-1 h-full overflow-hidden flex flex-col min-w-0">
       <ScheduleGrid 
-        class="h-full w-full"
         :DAYS="DAYS" 
         :PERIOD_TIMES="PERIOD_TIMES" 
         :classes="classes" 
@@ -78,13 +79,11 @@ const emit = defineEmits([
       />
     </div>
 
-    <!-- Toggle Button for Mobile -->
-    <button 
-      @click="showControlPanel = !showControlPanel"
-      class="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-40 hover:bg-indigo-700 active:scale-95 transition-all"
-    >
-      <X v-if="showControlPanel" :size="24" />
-      <Settings2 v-else :size="24" />
-    </button>
+    <!-- Overlay for mobile when sidebar is open -->
+    <div 
+      v-if="isSidebarOpen" 
+      @click="isSidebarOpen = false" 
+      class="lg:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-10 transition-opacity"
+    ></div>
   </div>
 </template>

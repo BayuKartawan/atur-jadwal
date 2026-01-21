@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from 'vue';
-import { Sparkles, Ban, Layers, Search, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { Sparkles, Ban, Layers, Search, RotateCcw, Trash2, X } from 'lucide-vue-next';
 
 const props = defineProps({
+  isOpen: Boolean,
   isDisableMode: Boolean,
   isGenerating: Boolean,
   classes: Array,
@@ -16,12 +16,21 @@ const props = defineProps({
   selectedAllocation: Object
 });
 
-defineEmits(['toggleDisableMode', 'autoSchedule', 'update:taskClassFilter', 'update:taskSearchQuery', 'selectAlloc', 'resetSlots', 'resetSchedule']);
+defineEmits(['toggleDisableMode', 'autoSchedule', 'update:taskClassFilter', 'update:taskSearchQuery', 'selectAlloc', 'resetSlots', 'resetSchedule', 'closeSidebar']);
 </script>
 
 <template>
-  <div class="lg:w-80 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col h-full shadow-lg shadow-slate-900/5 dark:shadow-black/20 relative z-20 transition-colors duration-300">
-    <div class="p-6 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+  <div 
+    class="fixed inset-y-0 left-0 w-[85vw] sm:w-80 lg:relative lg:w-80 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col h-full shadow-2xl lg:shadow-lg shadow-slate-900/5 dark:shadow-black/20 z-[60] lg:z-20 transition-all duration-300 transform"
+    :class="isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:flex'"
+  >
+    <div class="p-6 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 relative">
+      <button 
+        @click="$emit('update:isOpen', false)"
+        class="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"
+      >
+        <X :size="20" />
+      </button>
       <h4 class="text-xs font-black text-slate-400 dark:text-slate-500 uppercase mb-4 tracking-widest flex items-center gap-2">
         <div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
         Kontrol Panel

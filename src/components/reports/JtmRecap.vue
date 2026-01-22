@@ -1,5 +1,6 @@
 <script setup>
-import { FileBarChart, Download } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { FileBarChart, Download, ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-vue-next';
 import AppBadge from '../ui/AppBadge.vue';
 import AppButton from '../ui/AppButton.vue';
 
@@ -8,6 +9,23 @@ const props = defineProps({
   allocations: Array,
   getTeacherHomeroomClass: Function,
   getUsedJtm: Function
+});
+
+const sortBy = ref('name'); // 'name' | 'jtm'
+
+const sortedTeachers = computed(() => {
+  const result = [...props.teachers];
+
+  if (sortBy.value === 'name') {
+    return result.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sortBy.value === 'jtm') {
+    return result.sort((a, b) => {
+      const jtmA = props.allocations.filter(x => x.teacherId === a.id).reduce((s, x) => s + x.jtm, 0);
+      const jtmB = props.allocations.filter(x => x.teacherId === b.id).reduce((s, x) => s + x.jtm, 0);
+      return jtmB - jtmA; // Descending
+    });
+  }
+  return result;
 });
 
 const downloadRecap = () => {
@@ -61,11 +79,10 @@ const downloadRecap = () => {
       <div class="p-4 lg:p-8 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
         <div class="flex items-center gap-4 lg:gap-6">
           <div
-            class="w-12 h-12 lg:w-16 lg:h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm shrink-0">
-            <FileBarChart :size="24" class="lg:hidden" />
-            <FileBarChart :size="32" class="hidden lg:block" />
+            class="hidden lg:flex w-12 h-12 lg:w-16 lg:h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm shrink-0">
+            <FileBarChart :size="32" />
           </div>
-          <div>
+          <div class="hidden lg:block">
             <h3 class="text-lg lg:text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
               Rekapitulasi JTM</h3>
             <p
@@ -74,40 +91,62 @@ const downloadRecap = () => {
               Mengajar
             </p>
           </div>
-          <div class="ml-auto">
+
+          <div class="flex items-center gap-2 lg:gap-3 lg:ml-auto w-full lg:w-auto">
+            <div
+              class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl lg:rounded-2xl border border-slate-200 dark:border-slate-700/50 flex-1 lg:flex-none">
+              <button @click="sortBy = 'name'" :class="[
+                'flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-bold uppercase tracking-wider transition-all',
+                sortBy === 'name'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              ]">
+                <ArrowUpNarrowWide :size="14" />
+                <span>Nama</span>
+              </button>
+              <button @click="sortBy = 'jtm'" :class="[
+                'flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-bold uppercase tracking-wider transition-all',
+                sortBy === 'jtm'
+                  ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              ]">
+                <ArrowDownWideNarrow :size="14" />
+                <span>JTM Tertinggi</span>
+              </button>
+            </div>
+
             <AppButton @click="downloadRecap" variant="primary"
-              class="!rounded-xl !py-2.5 !px-4 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
+              class="!rounded-xl !py-2.5 !px-0 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all w-10 h-10 lg:w-auto lg:h-auto !p-0 lg:!px-4 flex items-center justify-center shrink-0">
               <template #icon-left>
                 <Download :size="16" />
               </template>
               <span class="hidden lg:inline text-xs font-bold uppercase tracking-wider">Download Excel</span>
-              <span class="lg:hidden text-xs font-bold uppercase tracking-wider">Excel</span>
             </AppButton>
           </div>
         </div>
       </div>
 
       <!-- Content Section -->
-      <div class="flex-1 overflow-hidden lg:overflow-auto relative bg-slate-50/50 dark:bg-slate-950/50">
+      <!-- Content Section -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/50 dark:bg-slate-950/50 p-4 lg:p-8">
 
-        <!-- Mobile Card View (< lg) -->
-        <div class="lg:hidden h-full overflow-y-auto custom-scrollbar p-4 space-y-4 pb-20">
-          <div v-for="t in teachers" :key="t.id"
-            class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6">
+          <div v-for="t in sortedTeachers" :key="t.id"
+            class="bg-white dark:bg-slate-900 rounded-2xl p-4 lg:p-6 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-3 lg:gap-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
 
             <!-- Card Header -->
             <div class="flex justify-between items-start">
               <div>
-                <h4 class="text-sm font-black text-slate-800 dark:text-slate-200">{{ t.name }}</h4>
-                <div v-if="getTeacherHomeroomClass(t.id)" class="mt-1">
-                  <AppBadge variant="primary" class="!px-2 !py-0.5 text-[9px]">
+                <h4 class="text-sm lg:text-base font-black text-slate-800 dark:text-slate-200">{{ t.name }}</h4>
+                <div v-if="getTeacherHomeroomClass(t.id)" class="mt-1 lg:mt-2">
+                  <AppBadge variant="primary" class="!px-2 !py-0.5 text-[9px] lg:text-[10px]">
                     WALI KELAS {{ getTeacherHomeroomClass(t.id) }}
                   </AppBadge>
                 </div>
               </div>
-              <div class="text-right">
+              <div class="text-right shrink-0 ml-2">
                 <span class="block text-[10px] uppercase font-bold text-slate-400">Total Beban</span>
-                <span class="block text-lg font-black text-slate-900 dark:text-white leading-none mt-0.5">
+                <span class="block text-lg lg:text-2xl font-black text-slate-900 dark:text-white leading-none mt-0.5">
                   {{allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0)}} JP
                 </span>
               </div>
@@ -115,7 +154,7 @@ const downloadRecap = () => {
 
             <!-- Progress Bar & Stats -->
             <div
-              class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
+              class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 lg:p-4 border border-slate-100 dark:border-slate-700/50">
               <div class="flex justify-between items-center text-xs mb-2">
                 <span class="font-bold text-slate-500 dark:text-slate-400">Keterisian</span>
                 <span class="font-black text-slate-800 dark:text-slate-200">
@@ -125,15 +164,15 @@ const downloadRecap = () => {
                 </span>
               </div>
 
-              <div class="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-1">
+              <div class="w-full h-2.5 lg:h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-1">
                 <div class="bg-emerald-500 h-full rounded-full transition-all duration-1000"
                   :style="{ width: `${allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0) > 0 ? (allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + getUsedJtm(a.id), 0) / allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0)) * 100 : 0}%` }">
                 </div>
               </div>
 
-              <div class="flex justify-between items-center">
+              <div class="flex justify-between items-center mt-2">
                 <span class="text-[10px] font-bold text-slate-400">Persentase</span>
-                <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                <span class="text-[10px] lg:text-xs font-black text-emerald-600 dark:text-emerald-400">
                   {{allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0) > 0 ?
                     Math.round((allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + getUsedJtm(a.id), 0) /
                       allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0)) * 100) : 0}}%
@@ -143,86 +182,8 @@ const downloadRecap = () => {
 
           </div>
 
-          <div v-if="teachers.length === 0" class="py-12 text-center opacity-40">
-            <p class="text-xs font-bold text-slate-500">Belum ada data guru</p>
-          </div>
-        </div>
-
-        <!-- Desktop Table View (>= lg) -->
-        <div class="hidden lg:block h-full overflow-auto custom-scrollbar">
-          <table class="w-full text-left border-collapse">
-            <thead
-              class="bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-500 dark:text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] sticky top-0 z-20 border-b border-slate-100 dark:border-slate-800">
-              <tr>
-                <th class="px-8 py-6 sticky left-0 z-10 bg-slate-50 dark:bg-slate-900 lg:bg-transparent lg:shadow-none">
-                  Nama
-                  Guru</th>
-                <th class="px-8 py-6 whitespace-nowrap">Wali Kelas</th>
-                <th class="px-8 py-6 text-center whitespace-nowrap">Total JTM</th>
-                <th class="px-8 py-6 text-center whitespace-nowrap">Terisi</th>
-                <th class="px-8 py-6 min-w-[200px]">Persentase Progress</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">
-              <tr v-for="t in teachers" :key="t.id"
-                class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                <td class="px-8 py-5 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/30 transition-colors">
-                  <div
-                    class="font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-sm">
-                    {{ t.name }}
-                  </div>
-                </td>
-                <td class="px-8 py-5 whitespace-nowrap">
-                  <AppBadge v-if="getTeacherHomeroomClass(t.id)" variant="primary" class="!px-3 !py-1 text-[10px]">
-                    KELAS {{ getTeacherHomeroomClass(t.id) }}
-                  </AppBadge>
-                  <span v-else
-                    class="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest italic">-</span>
-                </td>
-                <td class="px-8 py-5 text-center font-black text-slate-500 dark:text-slate-500 text-xs tabular-nums">
-                  {{allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0)}}
-                </td>
-                <td
-                  class="px-8 py-5 text-center font-black text-emerald-600 dark:text-emerald-400 text-base tabular-nums">
-                  {{allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + getUsedJtm(a.id), 0)}}
-                </td>
-                <td class="px-8 py-5">
-                  <div v-if="allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0) > 0"
-                    class="flex flex-col gap-2.5">
-                    <div
-                      class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner border border-slate-200/20 dark:border-slate-700/50">
-                      <div
-                        class="bg-gradient-to-r from-emerald-400 to-emerald-600 h-full transition-all duration-1000 shadow-[0_0_8px_rgba(16,185,129,0.3)]"
-                        :style="{ width: `${(allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + getUsedJtm(a.id), 0) / allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0)) * 100}%` }">
-                      </div>
-                    </div>
-                    <div class="flex justify-between items-center px-0.5">
-                      <span
-                        class="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest italic">Status
-                        Beban</span>
-                      <span class="text-[11px] font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                        {{Math.round((allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s +
-                          getUsedJtm(a.id), 0)
-                          / allocations.filter(a => a.teacherId === t.id).reduce((s, a) => s + a.jtm, 0)) * 100)}}%
-                      </span>
-                    </div>
-                  </div>
-                  <div v-else class="flex items-center gap-2 opacity-10">
-                    <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Desktop Empty State -->
-          <div v-if="teachers.length === 0" class="py-32 text-center opacity-30 flex flex-col items-center">
-            <div class="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
-              <FileBarChart :size="40" class="text-slate-300 dark:text-slate-600" />
-            </div>
-            <p class="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Data guru
-              belum
-              tersedia</p>
+          <div v-if="teachers.length === 0" class="col-span-full py-12 lg:py-24 text-center opacity-40">
+            <p class="text-xs lg:text-sm font-bold text-slate-500">Belum ada data guru</p>
           </div>
         </div>
       </div>

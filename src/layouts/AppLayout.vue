@@ -11,13 +11,15 @@ import ScrollToTop from "../components/ui/ScrollToTop.vue";
 
 // --- CONSTANTS ---
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-const PERIOD_TIMES = [
+const DEFAULT_PERIOD_TIMES = [
   "07:15 - 07:45",
   "07:45 - 08:15",
   "08:15 - 08:45",
   "08:45 - 09:15",
+  { time: "09:15 - 10:00", isBreak: true },
   "10:00 - 10:30",
   "10:30 - 11:00",
+  { time: "11:00 - 11:20", isBreak: true },
   "11:20 - 11:50",
   "11:50 - 12:20",
 ];
@@ -68,6 +70,7 @@ const DUMMY_SUBJECTS = [
 const teachers = ref([]);
 const subjects = ref([]);
 const classes = ref(DEFAULT_CLASSES);
+const periodTimes = ref(DEFAULT_PERIOD_TIMES);
 const allocations = ref([]);
 const schedule = ref({});
 const disabledSlots = ref({});
@@ -120,6 +123,7 @@ onMounted(() => {
   const loadedTeachers = JSON.parse(localStorage.getItem("mi_teachers"));
   const loadedSubjects = JSON.parse(localStorage.getItem("mi_subjects"));
   const loadedClasses = JSON.parse(localStorage.getItem("mi_classes"));
+  const loadedPeriodTimes = JSON.parse(localStorage.getItem("mi_period_times"));
   const loadedAllocations =
     JSON.parse(localStorage.getItem("mi_allocations")) || [];
   const loadedSchedule = JSON.parse(localStorage.getItem("mi_schedule")) || {};
@@ -144,6 +148,12 @@ onMounted(() => {
     !loadedClasses || loadedClasses.length === 0
       ? DEFAULT_CLASSES
       : loadedClasses;
+
+  periodTimes.value =
+    !loadedPeriodTimes || loadedPeriodTimes.length === 0
+      ? DEFAULT_PERIOD_TIMES
+      : loadedPeriodTimes.map(p => p || "00:00 - 00:00"); // Safety fallback for undefined items
+
   allocations.value = loadedAllocations;
   schedule.value = loadedSchedule;
   disabledSlots.value = loadedDisabledSlots;
@@ -165,6 +175,7 @@ watch(
     teachers,
     subjects,
     classes,
+    periodTimes,
     allocations,
     schedule,
     disabledSlots,
@@ -175,6 +186,7 @@ watch(
     localStorage.setItem("mi_teachers", JSON.stringify(teachers.value));
     localStorage.setItem("mi_subjects", JSON.stringify(subjects.value));
     localStorage.setItem("mi_classes", JSON.stringify(classes.value));
+    localStorage.setItem("mi_period_times", JSON.stringify(periodTimes.value));
     localStorage.setItem("mi_allocations", JSON.stringify(allocations.value));
     localStorage.setItem("mi_schedule", JSON.stringify(schedule.value));
     localStorage.setItem(
@@ -206,6 +218,7 @@ const handleBackup = () => {
     teachers: teachers.value,
     subjects: subjects.value,
     classes: classes.value,
+    periodTimes: periodTimes.value,
     allocations: allocations.value,
     schedule: schedule.value,
     disabledSlots: disabledSlots.value,
@@ -237,6 +250,7 @@ const handleRestore = (e) => {
           teachers.value = data.teachers || [];
           subjects.value = data.subjects || [];
           classes.value = data.classes || DEFAULT_CLASSES;
+          periodTimes.value = data.periodTimes || DEFAULT_PERIOD_TIMES;
           allocations.value = data.allocations || [];
           schedule.value = data.schedule || {};
           disabledSlots.value = data.disabledSlots || {};
@@ -300,6 +314,27 @@ const addClass = (cls) => {
 const removeClass = (cls) => {
   classes.value = classes.value.filter((c) => c !== cls);
   showNotification("Kelas berhasil dihapus.");
+};
+
+const addPeriod = (period) => {
+  periodTimes.value.push(period);
+  showNotification("Jam pelajaran berhasil ditambahkan.");
+};
+
+const removePeriod = (index) => {
+  periodTimes.value.splice(index, 1);
+  showNotification("Jam pelajaran berhasil dihapus.");
+};
+
+const updatePeriod = (payload) => {
+  const { index, value } = payload;
+  periodTimes.value[index] = value;
+  showNotification("Jam pelajaran berhasil diperbarui.");
+};
+
+const updatePeriodOrder = (newOrder) => {
+  periodTimes.value = newOrder;
+  showNotification("Urutan jam berhasil diperbarui.");
 };
 
 const setHomeroomTeacher = (classId, teacherId) => {
@@ -606,29 +641,29 @@ const exportToExcel = () => {
   // ========== 1. SHEET: JADWAL PELAJARAN ==========
   const wsScheduleData = [["HARI", "JAM", ...classes.value.map((c) => "KELAS " + c)]];
   DAYS.forEach((day, dIdx) => {
-    for (let pIdx = 0; pIdx < PERIOD_TIMES.length; pIdx++) {
-      const row = [day, PERIOD_TIMES[pIdx]];
-      classes.value.forEach((cls) => {
-        if (isSlotDisabled(dIdx, pIdx, cls)) {
-          row.push("NONAKTIF");
-        } else {
-          const det = getAllocDetails(getSlot(dIdx, pIdx, cls));
-          row.push(det ? `${det.subjectName} (${det.teacherName})` : "-");
-        }
-      });
-      wsScheduleData.push(row);
-      if (pIdx === 3)
-        wsScheduleData.push([
-          day,
-          "09:15 - 10:00",
-          ...classes.value.map(() => "ISTIRAHAT 1"),
-        ]);
-      if (pIdx === 5)
-        wsScheduleData.push([
-          day,
-          "11:00 - 11:20",
-          ...classes.value.map(() => "ISTIRAHAT 2"),
-        ]);
+    for (let pIdx = 0; pIdx < periodTimes.value.length; pIdx++) {
+      const period = periodTimes.value[pIdx];
+      const timeStr = typeof period === 'object' ? period.time : period;
+      const isBreak = typeof period === 'object' && period.isBreak;
+
+      const row = [day, timeStr];
+
+      if (isBreak) {
+        classes.value.forEach(() => {
+          row.push("ISTIRAHAT");
+        });
+        wsScheduleData.push(row);
+      } else {
+        classes.value.forEach((cls) => {
+          if (isSlotDisabled(dIdx, pIdx, cls)) {
+            row.push("NONAKTIF");
+          } else {
+            const det = getAllocDetails(getSlot(dIdx, pIdx, cls));
+            row.push(det ? `${det.subjectName} (${det.teacherName})` : "-");
+          }
+        });
+        wsScheduleData.push(row);
+      }
     }
   });
   const wsSchedule = window.XLSX.utils.aoa_to_sheet(wsScheduleData);
@@ -786,11 +821,12 @@ const isTaskResultsEmpty = computed(() => {
           <component :is="Component" :isDisableMode="isDisableMode" :isGenerating="isGenerating" :classes="classes"
             :taskClassFilter="taskClassFilter" :taskSearchQuery="taskSearchQuery"
             :taskSidebarClasses="taskSidebarClasses" :isTaskResultsEmpty="isTaskResultsEmpty" :allocations="allocations"
-            :selectedAllocation="selectedAllocation" :DAYS="DAYS" :PERIOD_TIMES="PERIOD_TIMES" :teachers="teachers"
+            :selectedAllocation="selectedAllocation" :DAYS="DAYS" :PERIOD_TIMES="periodTimes" :teachers="teachers"
             :subjects="subjects" :curriculum="curriculum" :homerooms="homerooms" :allocForm="allocForm"
             :filterClass="filterClass" :filterTeacher="filterTeacher" :filteredAllocations="filteredAllocations"
-            :getSlot="getSlot" :getAllocDetails="getAllocDetails" :getUsedJtm="getUsedJtm"
-            :isSlotDisabled="isSlotDisabled" :getTeacherHomeroomClass="getTeacherHomeroomClass"
+            :periodTimes="periodTimes" @addPeriod="addPeriod" @removePeriod="removePeriod" @updatePeriod="updatePeriod"
+            @updatePeriodOrder="updatePeriodOrder" :getSlot="getSlot" :getAllocDetails="getAllocDetails"
+            :getUsedJtm="getUsedJtm" :isSlotDisabled="isSlotDisabled" :getTeacherHomeroomClass="getTeacherHomeroomClass"
             :isAppHeaderVisible="isAppHeaderVisible" @toggleAppHeader="isAppHeaderVisible = !isAppHeaderVisible"
             @toggleDisableMode="isDisableMode = !isDisableMode" @autoSchedule="handleAutoSchedule"
             @update:taskClassFilter="taskClassFilter = $event" @update:taskSearchQuery="taskSearchQuery = $event"

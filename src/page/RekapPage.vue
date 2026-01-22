@@ -7,6 +7,7 @@ const props = defineProps({
   teachers: Array,
   allocations: Array,
   classes: Array,
+  subjects: Array,
   getTeacherHomeroomClass: Function,
   getUsedJtm: Function
 });
@@ -51,7 +52,8 @@ const activeTab = ref('teacher'); // 'teacher' or 'class'
         </div>
 
         <div v-else-if="activeTab === 'class'" class="h-full w-full">
-          <ClassRecap :classes="classes" :teachers="teachers" :allocations="allocations" :getUsedJtm="getUsedJtm" />
+          <ClassRecap :classes="classes" :teachers="teachers" :subjects="subjects" :allocations="allocations"
+            :getUsedJtm="getUsedJtm" />
         </div>
       </Transition>
     </div>

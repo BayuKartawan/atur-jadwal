@@ -6,6 +6,7 @@ import AppButton from '../ui/AppButton.vue';
 const props = defineProps({
     classes: Array,
     teachers: Array,
+    subjects: Array,
     allocations: Array,
     getUsedJtm: Function
 });
@@ -20,16 +21,21 @@ const classRecaps = computed(() => {
 
         classAllocations.forEach(alloc => {
             if (!teacherMap.has(alloc.teacherId)) {
-                const teacher = props.teachers.find(t => t.id === alloc.teacherId);
+                const teacher = props.teachers?.find(t => t.id === alloc.teacherId);
                 teacherMap.set(alloc.teacherId, {
                     id: alloc.teacherId,
                     name: teacher ? teacher.name : 'Unknown',
+                    subjects: [],
                     totalJtm: 0,
                     usedJtm: 0
                 });
             }
 
             const entry = teacherMap.get(alloc.teacherId);
+            const subject = props.subjects?.find(s => s.id === alloc.subjectId);
+            if (subject && !entry.subjects.includes(subject.name)) {
+                entry.subjects.push(subject.name);
+            }
             entry.totalJtm += parseInt(alloc.jtm) || 0;
             entry.usedJtm += props.getUsedJtm(alloc.id);
         });
@@ -50,17 +56,17 @@ const downloadClassRecap = () => {
     const wb = window.XLSX.utils.book_new();
 
     classRecaps.value.forEach(cls => {
-        const headers = ['Nama Guru', 'Total JTM', 'Terisi', 'Persentase'];
+        const headers = ['Nama Guru', 'Mata Pelajaran', 'Total JTM', 'Terisi', 'Persentase'];
         const data = cls.teachers.map(t => {
             const percentage = t.totalJtm > 0 ? Math.round((t.usedJtm / t.totalJtm) * 100) : 0;
-            return [t.name, t.totalJtm, t.usedJtm, `${percentage}%`];
+            return [t.name, t.subjects.join(', '), t.totalJtm, t.usedJtm, `${percentage}%`];
         });
 
         const wsData = [headers, ...data];
         const ws = window.XLSX.utils.aoa_to_sheet(wsData);
 
         // Auto-width
-        const colWidths = [{ wch: 40 }, { wch: 10 }, { wch: 10 }, { wch: 15 }];
+        const colWidths = [{ wch: 30 }, { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 15 }];
         ws['!cols'] = colWidths;
 
         // Sheet names can't be too long or contain certain chars. Class names are usually short.
@@ -120,8 +126,8 @@ const downloadClassRecap = () => {
             <div class="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     <div v-for="cls in classRecaps" :key="cls.name"
-                        class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden flex flex-col h-[500px]">
-                        <!-- Fixed height for card -->
+                        class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden flex flex-col h-full hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <!-- h-full allows it to grow if parent flex allows, but grid layout handles it. Removed fixed height -->
 
                         <div
                             class="p-4 border-b border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-800 flex justify-between items-center shrink-0">
@@ -132,26 +138,36 @@ const downloadClassRecap = () => {
                             </span>
                         </div>
 
-                        <div class="flex-1 overflow-y-auto custom-scrollbar">
+                        <div class="flex-1"> <!-- Removed overflows to show full list -->
                             <table class="w-full text-left text-sm">
                                 <thead
                                     class="bg-slate-100 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider sticky top-0">
                                     <tr>
-                                        <th class="px-4 py-3">Guru</th>
-                                        <th class="px-4 py-3 text-center">JTM</th>
-                                        <th class="px-4 py-3 text-center w-16">Status</th>
+                                        <th class="px-3 lg:px-4 py-3">Guru & Mapel</th>
+                                        <th class="px-3 lg:px-4 py-3 text-center">JTM</th>
+                                        <th class="px-3 lg:px-4 py-3 text-center w-16">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
                                     <tr v-for="teacher in cls.teachers" :key="teacher.id"
                                         class="hover:bg-white dark:hover:bg-slate-700/50 transition-colors">
-                                        <td class="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">
-                                            <div class="line-clamp-1" :title="teacher.name">{{ teacher.name }}</div>
+                                        <td class="px-3 lg:px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">
+                                            <div class="line-clamp-1 text-xs lg:text-sm" :title="teacher.name">{{
+                                                teacher.name }}
+                                            </div>
+                                            <div class="mt-1 flex flex-wrap gap-1">
+                                                <div class="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded-md inline-block border border-indigo-100 dark:border-indigo-800/30"
+                                                    v-for="subj in teacher.subjects" :key="subj">
+                                                    {{ subj }}
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="px-4 py-3 text-center font-bold text-slate-900 dark:text-slate-100">
+                                        <!-- Removed separate Mapel column td -->
+                                        <td
+                                            class="px-3 lg:px-4 py-3 text-center font-bold text-slate-900 dark:text-slate-100 text-xs lg:text-sm">
                                             {{ teacher.totalJtm }}
                                         </td>
-                                        <td class="px-4 py-3">
+                                        <td class="px-3 lg:px-4 py-3 min-w-[60px]">
                                             <div
                                                 class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                                 <div class="h-full bg-pink-500"
@@ -164,7 +180,7 @@ const downloadClassRecap = () => {
                                         </td>
                                     </tr>
                                     <tr v-if="cls.teachers.length === 0">
-                                        <td colspan="3" class="px-4 py-8 text-center text-slate-400 italic text-xs">
+                                        <td colspan="4" class="px-4 py-8 text-center text-slate-400 italic text-xs">
                                             Belum ada guru di kelas ini
                                         </td>
                                     </tr>

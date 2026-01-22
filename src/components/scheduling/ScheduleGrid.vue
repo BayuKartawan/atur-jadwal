@@ -98,7 +98,7 @@ const gridTemplate = computed(
               <Sparkles v-else :size="14" />
               <span class="hidden sm:inline">Auto-Isi</span>
             </button>
-            
+
             <!-- Toggle Disable Mode -->
             <button @click="$emit('toggleDisableMode')"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] lg:text-xs font-bold uppercase tracking-wide transition-all duration-200"
@@ -177,8 +177,27 @@ const gridTemplate = computed(
           {{ day }}
         </div>
 
-        <template v-for="(time, pIdx) in PERIOD_TIMES" :key="pIdx">
-          <div
+        <template v-for="(timeData, pIdx) in PERIOD_TIMES" :key="pIdx">
+
+          <!-- Rest Period Row -->
+          <div v-if="typeof timeData === 'object' && timeData.isBreak"
+            class="grid border-b border-amber-100 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20"
+            :style="{ gridTemplateColumns: `${timeColWidth} auto` }">
+            <div
+              class="p-2 border-r border-amber-100 dark:border-amber-900 sticky left-0 bg-amber-50 dark:bg-amber-950 flex flex-col items-center justify-center z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+              <Coffee :size="isMobile ? 12 : 16" class="text-amber-400 dark:text-amber-500 mb-0.5 lg:mb-1" />
+              <span class="text-[7px] lg:text-[8px] font-black text-amber-500 dark:text-amber-600">
+                {{ timeData.time }}
+              </span>
+            </div>
+            <div
+              class="flex items-center justify-center p-2 text-[9px] lg:text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase lg:tracking-[1em] tracking-widest italic select-none">
+              ISTIRAHAT
+            </div>
+          </div>
+
+          <!-- Schedule Row -->
+          <div v-else
             class="grid border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-colors"
             :style="{ gridTemplateColumns: gridTemplate }">
             <!-- Fixed Time Column -->
@@ -187,7 +206,7 @@ const gridTemplate = computed(
               <span class="text-[8px] lg:text-[9px] font-black text-slate-300 dark:text-slate-600">#{{ pIdx + 1
                 }}</span>
               <span class="text-[9px] lg:text-[10px] font-black text-slate-600 dark:text-slate-400 mt-0.5">{{
-                time.split(" ")[0] }}</span>
+                (typeof timeData === 'object' ? timeData.time : timeData).split(" ")[0] }}</span>
             </div>
 
             <!-- Subject Cells -->
@@ -253,29 +272,6 @@ const gridTemplate = computed(
                 backgroundImage:
                   'repeating-linear-gradient(45deg, #fff, #fff 10px, transparent 10px, transparent 20px)',
               }"></div>
-            </div>
-          </div>
-
-          <!-- Rest Periods -->
-          <div v-if="pIdx === 3 || pIdx === 5"
-            class="grid border-b border-amber-100 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20"
-            :style="{ gridTemplateColumns: `${timeColWidth.value} auto` }">
-            <div
-              class="p-2 border-r border-amber-100 dark:border-amber-900 sticky left-0 bg-amber-50 dark:bg-amber-950 flex flex-col items-center justify-center z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-              <Coffee :size="isMobile ? 12 : 16" class="text-amber-400 dark:text-amber-500 mb-0.5 lg:mb-1" />
-              <span class="text-[7px] lg:text-[8px] font-black text-amber-500 dark:text-amber-600">{{
-                pIdx === 3
-                  ? isMobile
-                    ? "09:15"
-                    : "09:15-10:00"
-                  : isMobile
-                    ? "11:00"
-                    : "11:00-11:20"
-              }}</span>
-            </div>
-            <div
-              class="flex items-center justify-center p-2 text-[9px] lg:text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase lg:tracking-[1em] tracking-widest italic select-none">
-              Istirahat {{ pIdx === 3 ? "1" : "2" }}
             </div>
           </div>
         </template>

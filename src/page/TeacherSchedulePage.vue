@@ -39,9 +39,12 @@ const teacherSchedule = computed(() => {
             periods: []
         };
 
-        props.PERIOD_TIMES.forEach((time, periodIdx) => {
+        props.PERIOD_TIMES.forEach((timeData, periodIdx) => {
             let foundAlloc = null;
             let foundClass = null;
+
+            const timeStr = typeof timeData === 'object' ? timeData.time : timeData;
+            const isBreak = typeof timeData === 'object' && timeData.isBreak;
 
             // Check all classes to see if this teacher is teaching
             for (const classId of props.classes) {
@@ -57,10 +60,10 @@ const teacherSchedule = computed(() => {
             }
 
             daySchedule.periods.push({
-                time: time,
+                time: timeStr,
                 alloc: foundAlloc,
                 classId: foundClass,
-                isBreak: (periodIdx === 3 || periodIdx === 5) // Hardcoded break check based on AppLayout
+                isBreak: isBreak
             });
         });
         schedule.push(daySchedule);
@@ -192,9 +195,9 @@ const downloadTeacherSchedule = () => {
 
                             <div
                                 class="w-12 shrink-0 py-1 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-                                {{ period.time.split(' - ')[0] }}
+                                {{ period.time ? period.time.split(' - ')[0] : '-' }}
                                 <span class="opacity-50 text-[8px]">s/d</span>
-                                {{ period.time.split(' - ')[1] }}
+                                {{ period.time && period.time.includes(' - ') ? period.time.split(' - ')[1] : '-' }}
                             </div>
 
                             <div class="flex-1 min-w-0">

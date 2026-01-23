@@ -143,11 +143,6 @@ const downloadClassSchedule = () => {
   window.XLSX.utils.book_append_sheet(wb, ws, `Kelas ${selectedClassId.value}`);
   window.XLSX.writeFile(wb, `Jadwal_Kelas_${selectedClassId.value}.xlsx`);
 };
-
-const handleCellClick = (dayIdx, periodIdx) => {
-  if (!selectedClassId.value) return;
-  emit("cellClick", dayIdx, periodIdx, selectedClassId.value);
-};
 </script>
 
 <template>
@@ -273,15 +268,11 @@ const handleCellClick = (dayIdx, periodIdx) => {
             <div
               v-for="(period, pIdx) in day.periods"
               :key="pIdx"
-              @click="handleCellClick(day.dayIdx, period.periodIdx)"
-              class="px-4 py-3 flex items-start gap-4 cursor-pointer transition-all active:scale-[0.98]"
+              class="px-4 py-3 flex items-start gap-4 transition-all"
               :class="[
                 period.isDisabled
                   ? 'bg-slate-100/50 dark:bg-slate-900/50 opacity-60'
                   : 'hover:bg-indigo-50 dark:hover:bg-indigo-900/10',
-                selectedAllocation && !period.isDisabled && !period.isBreak
-                  ? 'ring-2 ring-inset ring-emerald-500/20 bg-emerald-50/30'
-                  : '',
               ]"
             >
               <div

@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from "vue";
 import AllocationManager from "../components/scheduling/AllocationManager.vue";
 
 const props = defineProps({
@@ -12,6 +13,7 @@ const props = defineProps({
   filteredAllocations: Array,
   getAllocDetails: Function,
   getTeacherHomeroomClass: Function,
+  isEditing: Boolean,
 });
 
 const emit = defineEmits([
@@ -21,11 +23,25 @@ const emit = defineEmits([
   "remove",
   "teacherChange",
   "showModal",
+  "edit",
+  "cancelEdit",
 ]);
+
+const containerRef = ref(null);
+
+const handleEdit = (payload) => {
+  emit("edit", payload);
+  if (containerRef.value) {
+    containerRef.value.scrollTo({ top: 0, behavior: "smooth" });
+  }
+};
 </script>
 
 <template>
-  <div class="h-full overflow-y-auto lg:overflow-hidden custom-scrollbar">
+  <div
+    ref="containerRef"
+    class="h-full overflow-y-auto lg:overflow-hidden custom-scrollbar"
+  >
     <AllocationManager
       :teachers="teachers"
       :subjects="subjects"
@@ -43,6 +59,9 @@ const emit = defineEmits([
       @remove="$emit('remove', $event)"
       @teacherChange="$emit('teacherChange', $event)"
       @showModal="$emit('showModal', $event)"
+      :isEditing="isEditing"
+      @edit="handleEdit"
+      @cancelEdit="$emit('cancelEdit')"
     />
   </div>
 </template>

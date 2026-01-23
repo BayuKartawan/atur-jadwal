@@ -236,7 +236,9 @@ const totalAllocationsWithRemainingJtm = computed(() => {
                   <div
                     class="text-[9px] text-slate-500 dark:text-slate-500 font-bold mb-4 tracking-wide uppercase"
                   >
-                    {{ getAllocDetails(a.id)?.teacherName.split(",")[0] }}
+                    {{
+                      getAllocDetails(a.id)?.teacherName?.split(",")[0] || "-"
+                    }}
                   </div>
 
                   <div class="flex items-center gap-3">

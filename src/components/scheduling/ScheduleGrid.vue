@@ -354,7 +354,7 @@ const gridTemplate = computed(
                     {{
                       getAllocDetails(
                         getSlot(dIdx, pIdx, cls),
-                      )?.teacherName.split(",")[0]
+                      )?.teacherName?.split(",")[0] || "-"
                     }}
                   </div>
                 </div>

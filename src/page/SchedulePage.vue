@@ -37,6 +37,13 @@ const emit = defineEmits([
 
 const isSidebarOpen = ref(true);
 const toggleSidebar = () => (isSidebarOpen.value = !isSidebarOpen.value);
+
+const handleSelectAlloc = (a) => {
+  emit("selectAlloc", a);
+  if (typeof window !== "undefined" && window.innerWidth < 1024) {
+    isSidebarOpen.value = false;
+  }
+};
 </script>
 
 <template>
@@ -66,12 +73,7 @@ const toggleSidebar = () => (isSidebarOpen.value = !isSidebarOpen.value);
       :selectedAllocation="selectedAllocation"
       @update:taskClassFilter="$emit('update:taskClassFilter', $event)"
       @update:taskSearchQuery="$emit('update:taskSearchQuery', $event)"
-      @selectAlloc="
-        (a) => {
-          $emit('selectAlloc', a);
-          if (window.innerWidth < 1024) isSidebarOpen = false;
-        }
-      "
+      @selectAlloc="handleSelectAlloc"
       @resetSlots="$emit('resetSlots', $event)"
     />
 

@@ -11,6 +11,7 @@ const emit = defineEmits([
   "downloadTemplate",
   "uploadExcel",
   "updateCurriculum",
+  "syncAllocations",
 ]);
 </script>
 
@@ -22,6 +23,7 @@ const emit = defineEmits([
       :curriculum="curriculum"
       @downloadTemplate="$emit('downloadTemplate')"
       @uploadExcel="$emit('uploadExcel')"
+      @syncAllocations="$emit('syncAllocations')"
       @updateCurriculum="
         (classId, subjectId, val) =>
           $emit('updateCurriculum', classId, subjectId, val)

@@ -1,6 +1,14 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Filter, Trash2, Plus, Search, X, RotateCcw } from "lucide-vue-next";
+import {
+  Filter,
+  Trash2,
+  Plus,
+  Search,
+  X,
+  RotateCcw,
+  Pencil,
+} from "lucide-vue-next";
 import AppCard from "../ui/AppCard.vue";
 import AppButton from "../ui/AppButton.vue";
 import AppBadge from "../ui/AppBadge.vue";
@@ -17,6 +25,7 @@ const props = defineProps({
   filteredAllocations: Array,
   getAllocDetails: Function,
   getTeacherHomeroomClass: Function,
+  isEditing: Boolean,
 });
 
 const emit = defineEmits([
@@ -26,6 +35,8 @@ const emit = defineEmits([
   "remove",
   "teacherChange",
   "showModal",
+  "edit",
+  "cancelEdit",
 ]);
 
 const searchQuery = ref("");
@@ -170,11 +181,25 @@ const filterTeacherOptions = computed(() => {
             {{ allocForm.jtm }}
           </div>
         </div>
-        <div class="col-span-2 md:col-span-2">
+        <div class="col-span-2 md:col-span-2 flex gap-2">
+          <button
+            v-if="isEditing"
+            @click="$emit('cancelEdit')"
+            type="button"
+            class="h-[52px] w-[52px] rounded-2xl bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50 flex items-center justify-center shrink-0 transition-all active:scale-95"
+            title="Batal Edit"
+          >
+            <X :size="24" stroke-width="2.5" />
+          </button>
           <AppButton
             @click="$emit('add')"
-            variant="success"
-            class="w-full !py-3.5 !rounded-2xl !bg-emerald-600 dark:!bg-emerald-500 hover:!bg-emerald-700 dark:hover:!bg-emerald-400 !text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40 transition-all duration-300 group active:scale-95 disabled:!bg-slate-200 dark:disabled:!bg-slate-800 disabled:!text-slate-400"
+            :variant="isEditing ? 'warning' : 'success'"
+            class="w-full !h-[52px] !rounded-2xl !text-white shadow-lg transition-all duration-300 group active:scale-95 disabled:!bg-slate-200 dark:disabled:!bg-slate-800 disabled:!text-slate-400 flex items-center justify-center"
+            :class="
+              isEditing
+                ? '!bg-amber-500 hover:!bg-amber-600 shadow-amber-200 dark:shadow-amber-900/40'
+                : '!bg-emerald-600 dark:!bg-emerald-500 hover:!bg-emerald-700 dark:hover:!bg-emerald-400 shadow-emerald-200 dark:shadow-emerald-900/40'
+            "
             :disabled="
               !allocForm.teacherId ||
               !allocForm.subjectId ||
@@ -183,14 +208,20 @@ const filterTeacherOptions = computed(() => {
             "
           >
             <template #icon-left>
+              <Pencil
+                v-if="isEditing"
+                :size="20"
+                class="group-hover:rotate-12 transition-transform duration-300"
+              />
               <Plus
+                v-else
                 :size="20"
                 class="group-hover:rotate-90 transition-transform duration-300"
               />
             </template>
-            <span class="font-black uppercase tracking-widest text-[11px]"
-              >Tambah Alokasi</span
-            >
+            <span class="font-black uppercase tracking-widest text-[11px]">{{
+              isEditing ? "Update" : "Tambah"
+            }}</span>
           </AppButton>
         </div>
       </div>
@@ -296,102 +327,91 @@ const filterTeacherOptions = computed(() => {
           <div
             v-for="a in finalAllocations"
             :key="a.id"
-            class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 lg:p-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 flex flex-col h-full relative group overflow-visible hover:z-[10] focus-within:z-[20]"
+            class="bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 p-4 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col h-auto relative group"
           >
-            <!-- Trash Action (Visible on Hover) -->
-            <button
-              @click="confirmRemove(a.id)"
-              class="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700 text-rose-500 opacity-100 translate-y-0 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-y-2 lg:group-hover:translate-y-0 transition-all z-10 flex items-center justify-center"
-            >
-              <Trash2 :size="18" />
-            </button>
-
-            <!-- ID Badge -->
-            <div class="absolute top-8 right-8">
-              <span
-                class="text-[9px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest italic"
-                >#{{ a.id.slice(0, 4) }}</span
-              >
-            </div>
-
-            <!-- Class Indicator -->
-            <div class="flex items-center gap-3 mb-4 lg:mb-8">
+            <!-- Card Header: Class & Actions -->
+            <div class="flex items-start justify-between mb-3">
+              <!-- Class Badge -->
               <div
-                class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center border border-emerald-100/50 dark:border-emerald-800/50"
+                class="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1.5 rounded-xl border border-emerald-100/50 dark:border-emerald-800/50"
               >
+                <div
+                  class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm"
+                >
+                  {{ a.classId }}
+                </div>
                 <span
-                  class="text-sm font-black text-emerald-600 dark:text-emerald-400"
-                  >{{ a.classId }}</span
+                  class="text-xs font-bold text-emerald-700 dark:text-emerald-400"
+                  >Kelas {{ a.classId }}</span
                 >
               </div>
-              <div>
-                <h5
-                  class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-none mb-1"
+
+              <!-- Action Buttons -->
+              <div class="flex items-center gap-1">
+                <button
+                  @click="$emit('edit', a)"
+                  class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 flex items-center justify-center transition-colors"
+                  title="Edit"
                 >
-                  Target Kelas
-                </h5>
-                <p class="text-xs font-bold text-slate-800 dark:text-white">
-                  Kelas {{ a.classId }}
-                </p>
+                  <Pencil :size="14" stroke-width="2.5" />
+                </button>
+                <button
+                  @click="confirmRemove(a.id)"
+                  class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 flex items-center justify-center transition-colors"
+                  title="Hapus"
+                >
+                  <Trash2 :size="14" stroke-width="2.5" />
+                </button>
               </div>
             </div>
 
             <!-- Main Content -->
-            <div class="flex-1 flex flex-col gap-3 lg:gap-6">
-              <div class="space-y-1.5">
-                <h4
-                  class="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest leading-none italic"
-                >
-                  Mata Pelajaran
-                </h4>
-                <h3
-                  class="text-lg font-extrabold text-slate-900 dark:text-white leading-tight min-h-[3rem]"
-                >
-                  {{
-                    getAllocDetails(a.id)?.subjectName || "Data Tidak Ditemukan"
-                  }}
-                </h3>
-              </div>
-
-              <div class="space-y-1.5">
-                <h4
-                  class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none italic"
-                >
-                  Guru Pengampu
-                </h4>
-                <p class="text-sm font-bold text-slate-700 dark:text-slate-300">
-                  {{
-                    getAllocDetails(a.id)?.teacherName || "Guru Belum Diatur"
-                  }}
-                </p>
+            <div class="flex-1 space-y-2 mb-4">
+              <h3
+                class="text-sm lg:text-base font-extrabold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2"
+                :title="getAllocDetails(a.id)?.subjectName"
+              >
+                {{
+                  getAllocDetails(a.id)?.subjectName || "Data Tidak Ditemukan"
+                }}
+              </h3>
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-1 h-8 rounded-full bg-slate-100 dark:bg-slate-800"
+                ></div>
+                <div>
+                  <h4
+                    class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider"
+                  >
+                    Guru Pengampu
+                  </h4>
+                  <p
+                    class="text-xs font-semibold text-slate-600 dark:text-slate-400 line-clamp-1"
+                    :title="getAllocDetails(a.id)?.teacherName"
+                  >
+                    {{
+                      getAllocDetails(a.id)?.teacherName || "Guru Belum Diatur"
+                    }}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <!-- Duration Footer -->
+            <!-- Footer: JTM & ID -->
             <div
-              class="mt-4 lg:mt-8 pt-4 lg:pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between"
+              class="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between mt-auto"
             >
-              <div>
-                <span
-                  class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none"
-                  >Alokasi Waktu</span
+              <div class="flex items-center gap-2">
+                <div
+                  class="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black tracking-wide border border-indigo-100 dark:border-indigo-800/30"
                 >
-                <div class="flex items-center gap-1.5 mt-1">
-                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                  <span
-                    class="text-xs font-black text-slate-900 dark:text-white"
-                    >{{ a.jtm }} Jam / Minggu</span
-                  >
+                  {{ a.jtm }} JTM
                 </div>
               </div>
-              <div
-                class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-colors"
+              <span
+                class="text-[9px] font-mono text-slate-300 dark:text-slate-700"
+                >#{{ a.id.slice(0, 4) }}</span
               >
-                <Plus
-                  :size="14"
-                  class="text-slate-300 dark:text-slate-600 group-hover:text-indigo-500"
-                />
-              </div>
             </div>
           </div>
         </TransitionGroup>

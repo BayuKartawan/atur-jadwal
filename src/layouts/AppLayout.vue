@@ -79,6 +79,7 @@ const allocForm = reactive({
   jtm: 0,
 });
 const selectedAllocation = ref(null);
+const editingAllocationId = ref(null);
 const filterClass = ref("all");
 const filterTeacher = ref("all");
 
@@ -451,6 +452,37 @@ const handleUploadExcel = (e) => {
   reader.readAsArrayBuffer(file);
 };
 
+const syncAllocationsWithCurriculum = () => {
+  if (checkLocked()) return;
+
+  let updatedCount = 0;
+  const newAllocations = allocations.value.map((alloc) => {
+    const key = `${alloc.classId}_${alloc.subjectId}`;
+    const newJtm = curriculum.value[key];
+
+    // Check if JTM exists in curriculum and is different
+    // Note: incoming curriculum values might be strings from inputs
+    if (
+      newJtm !== undefined &&
+      newJtm !== "" &&
+      alloc.jtm !== parseInt(newJtm)
+    ) {
+      updatedCount++;
+      return { ...alloc, jtm: parseInt(newJtm) };
+    }
+    return alloc;
+  });
+
+  if (updatedCount > 0) {
+    allocations.value = newAllocations;
+    showNotification(
+      `${updatedCount} alokasi jadwal berhasil diperbarui sesuai kurikulum.`,
+    );
+  } else {
+    showNotification("Semua alokasi jadwal sudah sesuai dengan kurikulum.");
+  }
+};
+
 const getTeacherHomeroomClass = (teacherId) =>
   Object.keys(homerooms.value).find((c) => homerooms.value[c] === teacherId);
 
@@ -466,6 +498,40 @@ const addAllocation = () => {
   if (!allocForm.teacherId || !allocForm.subjectId || !allocForm.classId)
     return;
 
+  // UPDATE MODE
+  if (editingAllocationId.value) {
+    const isDuplicate = allocations.value.some(
+      (a) =>
+        a.id !== editingAllocationId.value &&
+        a.subjectId === allocForm.subjectId &&
+        a.classId === allocForm.classId,
+    );
+
+    if (isDuplicate) {
+      return showNotification(
+        "Mata pelajaran ini sudah ada di kelas tersebut!",
+        "error",
+      );
+    }
+
+    const index = allocations.value.findIndex(
+      (a) => a.id === editingAllocationId.value,
+    );
+    if (index !== -1) {
+      allocations.value[index] = {
+        ...allocations.value[index],
+        teacherId: allocForm.teacherId,
+        subjectId: allocForm.subjectId,
+        classId: allocForm.classId,
+        jtm: allocForm.jtm,
+      };
+      showNotification("Alokasi berhasil diperbarui.");
+      cancelEditAllocation();
+    }
+    return;
+  }
+
+  // ADD MODE
   const isDuplicate = allocations.value.some(
     (a) =>
       a.subjectId === allocForm.subjectId && a.classId === allocForm.classId,
@@ -486,6 +552,28 @@ const addAllocation = () => {
     jtm: allocForm.jtm,
   });
   showNotification("Alokasi berhasil ditambahkan.");
+};
+
+const handleEditAllocation = (alloc) => {
+  if (checkLocked()) return;
+  editingAllocationId.value = alloc.id;
+  allocForm.teacherId = alloc.teacherId;
+  allocForm.subjectId = alloc.subjectId;
+  allocForm.classId = alloc.classId;
+  // Delay slightly to override JTM after watcher
+  setTimeout(() => {
+    allocForm.jtm = alloc.jtm;
+  }, 100);
+
+  showNotification("Mode edit aktif. Silakan ubah data.");
+};
+
+const cancelEditAllocation = () => {
+  editingAllocationId.value = null;
+  allocForm.teacherId = "";
+  allocForm.subjectId = "";
+  allocForm.classId = "";
+  allocForm.jtm = 0;
 };
 
 const removeAllocation = (id) => {
@@ -969,7 +1057,11 @@ const isTaskResultsEmpty = computed(() => {
             @uploadExcel="fileInputRef?.click()"
             @updateCurriculum="updateCurriculum"
             @setHomeroom="setHomeroomTeacher"
+            @syncAllocations="syncAllocationsWithCurriculum"
             @showModal="modal = $event"
+            :isEditing="!!editingAllocationId"
+            @edit="handleEditAllocation"
+            @cancelEdit="cancelEditAllocation"
           />
         </router-view>
         <input
@@ -1011,26 +1103,30 @@ const isTaskResultsEmpty = computed(() => {
     >
       <div
         v-if="selectedAllocation"
-        class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-800 border border-white/10 rounded-3xl px-8 py-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-40 flex items-center gap-6 border-b-4 border-b-indigo-500 transition-colors duration-300"
+        class="fixed bottom-1 left-1 right-25 lg:bottom-12 lg:left-1/2 lg:right-auto lg:w-auto lg:-translate-x-1/2 bg-slate-900 dark:bg-slate-800 border border-white/10 rounded-2xl lg:rounded-3xl px-5 py-3 lg:px-8 lg:py-5 shadow-xl lg:shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-40 flex items-center justify-between lg:justify-start gap-3 lg:gap-6 border-b-4 border-b-indigo-500 transition-all duration-300"
       >
-        <div class="flex flex-col">
+        <div class="flex flex-col min-w-0">
           <span
-            class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1 italic"
+            class="text-[8px] lg:text-[9px] font-black text-indigo-400 uppercase tracking-widest lg:tracking-[0.2em] mb-0.5 lg:mb-1 italic"
             >Menyusun Jadwal:</span
           >
-          <span class="text-sm font-bold text-white tracking-tight">
-            {{ getAllocDetails(selectedAllocation.id)?.subjectName }}
-            <span class="text-white/40 mx-2">|</span>
-            <span class="text-indigo-400"
+          <div
+            class="text-xs lg:text-sm font-bold text-white tracking-tight truncate flex items-center"
+          >
+            <span class="truncate block">{{
+              getAllocDetails(selectedAllocation.id)?.subjectName
+            }}</span>
+            <span class="text-white/40 mx-2 shrink-0">|</span>
+            <span class="text-indigo-400 shrink-0"
               >Kelas {{ selectedAllocation.classId }}</span
             >
-          </span>
+          </div>
         </div>
         <button
           @click="selectedAllocation = null"
-          class="p-2.5 bg-white/10 hover:bg-rose-500 text-white/50 hover:text-white rounded-2xl transition-all active:scale-95"
+          class="shrink-0 p-2 lg:p-2.5 bg-white/10 hover:bg-rose-500 text-white/50 hover:text-white rounded-xl lg:rounded-2xl transition-all active:scale-95"
         >
-          <X :size="20" />
+          <X :size="18" class="lg:w-5 lg:h-5" />
         </button>
       </div>
     </Transition>

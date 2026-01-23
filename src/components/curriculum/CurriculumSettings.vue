@@ -1,5 +1,5 @@
 <script setup>
-import { Download, Upload, ClipboardList } from "lucide-vue-next";
+import { Download, Upload, ClipboardList, RefreshCw } from "lucide-vue-next";
 import AppButton from "../ui/AppButton.vue";
 
 const props = defineProps({
@@ -8,7 +8,12 @@ const props = defineProps({
   curriculum: Object,
 });
 
-defineEmits(["downloadTemplate", "uploadExcel", "updateCurriculum"]);
+defineEmits([
+  "downloadTemplate",
+  "uploadExcel",
+  "updateCurriculum",
+  "syncAllocations",
+]);
 </script>
 
 <template>
@@ -46,6 +51,17 @@ defineEmits(["downloadTemplate", "uploadExcel", "updateCurriculum"]);
         <div
           class="flex items-center gap-2 lg:gap-3 w-full lg:w-auto p-1.5 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 transition-colors"
         >
+          <AppButton
+            @click="$emit('syncAllocations')"
+            variant="primary"
+            size="md"
+            class="!px-3 lg:!px-5 flex-1 lg:flex-none justify-center text-[10px] lg:text-xs"
+          >
+            <template #icon-left
+              ><RefreshCw :size="14" class="lg:w-4 lg:h-4"
+            /></template>
+            Simpan & Sinkron
+          </AppButton>
           <AppButton
             @click="$emit('downloadTemplate')"
             variant="secondary"

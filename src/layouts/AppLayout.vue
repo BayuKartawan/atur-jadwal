@@ -7,7 +7,9 @@ import AppModal from "../components/common/AppModal.vue";
 import AppNotification from "../components/common/AppNotification.vue";
 import AppHeader from "../components/layout/AppHeader.vue";
 import AppSidebar from "../components/layout/AppSidebar.vue";
+
 import ScrollToTop from "../components/ui/ScrollToTop.vue";
+import { useLockSystem } from "../composables/useLockSystem";
 
 // --- CONSTANTS ---
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -24,14 +26,7 @@ const DEFAULT_PERIOD_TIMES = [
   "11:50 - 12:20",
 ];
 
-const DEFAULT_CLASSES = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-];
+const DEFAULT_CLASSES = ["1", "2", "3", "4", "5", "6"];
 
 const DUMMY_TEACHERS = [
   "ABDUL HALIM, S.Pd.I.",
@@ -106,8 +101,21 @@ const isAppHeaderVisible = ref(true);
 const generateId = () => Math.random().toString(36).substr(2, 9);
 const getTimestamp = () => {
   const now = new Date();
-  const date = now.toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-  const time = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/:/g, '.');
+  const date = now
+    .toLocaleDateString("id-ID", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+    .replace(/\//g, "-");
+  const time = now
+    .toLocaleTimeString("id-ID", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+    .replace(/:/g, ".");
   return `${date}_${time}`;
 };
 
@@ -118,8 +126,23 @@ const showNotification = (msg, type = "success") => {
   }, 3000);
 };
 
+const { isLocked, encryptedPassword, initLockSystem, setLockState } =
+  useLockSystem();
+
+const checkLocked = () => {
+  if (isLocked.value) {
+    showNotification(
+      "Aplikasi terkunci. Silakan buka kunci terlebih dahulu.",
+      "error",
+    );
+    return true;
+  }
+  return false;
+};
+
 // --- PERSISTENCE ---
 onMounted(() => {
+  initLockSystem();
   const loadedTeachers = JSON.parse(localStorage.getItem("mi_teachers"));
   const loadedSubjects = JSON.parse(localStorage.getItem("mi_subjects"));
   const loadedClasses = JSON.parse(localStorage.getItem("mi_classes"));
@@ -152,7 +175,7 @@ onMounted(() => {
   periodTimes.value =
     !loadedPeriodTimes || loadedPeriodTimes.length === 0
       ? DEFAULT_PERIOD_TIMES
-      : loadedPeriodTimes.map(p => p || "00:00 - 00:00"); // Safety fallback for undefined items
+      : loadedPeriodTimes.map((p) => p || "00:00 - 00:00"); // Safety fallback for undefined items
 
   allocations.value = loadedAllocations;
   schedule.value = loadedSchedule;
@@ -224,6 +247,10 @@ const handleBackup = () => {
     disabledSlots: disabledSlots.value,
     homerooms: homerooms.value,
     curriculum: curriculum.value,
+    lockData: {
+      isLocked: isLocked.value,
+      password: encryptedPassword.value,
+    },
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json",
@@ -256,6 +283,11 @@ const handleRestore = (e) => {
           disabledSlots.value = data.disabledSlots || {};
           homerooms.value = data.homerooms || {};
           curriculum.value = data.curriculum || {};
+
+          if (data.lockData) {
+            setLockState(data.lockData.isLocked, data.lockData.password);
+          }
+
           modal.value = null;
           showNotification("Data berhasil dipulihkan.");
         },
@@ -268,27 +300,32 @@ const handleRestore = (e) => {
 };
 
 const addTeacher = (name) => {
+  if (checkLocked()) return;
   teachers.value.push({ id: generateId(), name });
   showNotification("Guru berhasil ditambahkan.");
 };
 
 const removeTeacher = (id) => {
+  if (checkLocked()) return;
   teachers.value = teachers.value.filter((t) => t.id !== id);
   showNotification("Guru berhasil dihapus.");
 };
 
 const addSubject = (subj) => {
+  if (checkLocked()) return;
   subjects.value.push({ id: generateId(), ...subj });
   showNotification("Mapel berhasil ditambahkan.");
 };
 
 const removeSubject = (id) => {
+  if (checkLocked()) return;
   subjects.value = subjects.value.filter((s) => s.id !== id);
   showNotification("Mapel berhasil dihapus.");
 };
 
 const updateTeacher = (id, name) => {
-  const index = teachers.value.findIndex(t => t.id === id);
+  if (checkLocked()) return;
+  const index = teachers.value.findIndex((t) => t.id === id);
   if (index !== -1) {
     teachers.value[index].name = name;
     showNotification("Nama guru berhasil diperbarui.");
@@ -296,7 +333,8 @@ const updateTeacher = (id, name) => {
 };
 
 const updateSubject = (id, updatedData) => {
-  const index = subjects.value.findIndex(s => s.id === id);
+  if (checkLocked()) return;
+  const index = subjects.value.findIndex((s) => s.id === id);
   if (index !== -1) {
     subjects.value[index] = { ...subjects.value[index], ...updatedData };
     showNotification("Data mapel berhasil diperbarui.");
@@ -304,6 +342,7 @@ const updateSubject = (id, updatedData) => {
 };
 
 const addClass = (cls) => {
+  if (checkLocked()) return;
   if (classes.value.includes(cls))
     return showNotification("Kelas sudah ada.", "error");
   classes.value.push(cls);
@@ -312,32 +351,38 @@ const addClass = (cls) => {
 };
 
 const removeClass = (cls) => {
+  if (checkLocked()) return;
   classes.value = classes.value.filter((c) => c !== cls);
   showNotification("Kelas berhasil dihapus.");
 };
 
 const addPeriod = (period) => {
+  if (checkLocked()) return;
   periodTimes.value.push(period);
   showNotification("Jam pelajaran berhasil ditambahkan.");
 };
 
 const removePeriod = (index) => {
+  if (checkLocked()) return;
   periodTimes.value.splice(index, 1);
   showNotification("Jam pelajaran berhasil dihapus.");
 };
 
 const updatePeriod = (payload) => {
+  if (checkLocked()) return;
   const { index, value } = payload;
   periodTimes.value[index] = value;
   showNotification("Jam pelajaran berhasil diperbarui.");
 };
 
 const updatePeriodOrder = (newOrder) => {
+  if (checkLocked()) return;
   periodTimes.value = newOrder;
   showNotification("Urutan jam berhasil diperbarui.");
 };
 
 const setHomeroomTeacher = (classId, teacherId) => {
+  if (checkLocked()) return;
   const newH = { ...homerooms.value };
   if (teacherId === "") delete newH[classId];
   else newH[classId] = teacherId;
@@ -345,6 +390,7 @@ const setHomeroomTeacher = (classId, teacherId) => {
 };
 
 const updateCurriculum = (classId, subjectId, val) => {
+  if (checkLocked()) return;
   curriculum.value[`${classId}_${subjectId}`] = val;
 };
 
@@ -371,10 +417,12 @@ const downloadCurriculumTemplate = () => {
 };
 
 const handleUploadExcel = (e) => {
+  if (checkLocked()) return;
   const file = e.target.files[0];
   if (!file || !window.XLSX) return;
   const reader = new FileReader();
   reader.onload = (evt) => {
+    if (checkLocked()) return; // Double check inside async
     const data = new Uint8Array(evt.target.result);
     const workbook = window.XLSX.read(data, { type: "array" });
     const sheetName = workbook.SheetNames[0];
@@ -414,6 +462,7 @@ const handleTeacherChangeInAlloc = (teacherId) => {
 };
 
 const addAllocation = () => {
+  if (checkLocked()) return;
   if (!allocForm.teacherId || !allocForm.subjectId || !allocForm.classId)
     return;
 
@@ -440,6 +489,7 @@ const addAllocation = () => {
 };
 
 const removeAllocation = (id) => {
+  if (checkLocked()) return;
   const newSch = { ...schedule.value };
   Object.keys(newSch).forEach((d) => {
     if (!newSch[d]) return;
@@ -456,6 +506,7 @@ const removeAllocation = (id) => {
 };
 
 const resetAllocationSlots = (allocId) => {
+  if (checkLocked()) return;
   const newSch = { ...schedule.value };
   Object.keys(newSch).forEach((d) => {
     if (!newSch[d]) return;
@@ -476,6 +527,7 @@ const isSlotDisabled = (dayIdx, periodIdx, classId) =>
   disabledSlots.value[`${dayIdx}_${periodIdx}_${classId}`];
 
 const toggleSlotDisable = (dayIdx, periodIdx, classId) => {
+  if (checkLocked()) return;
   const key = `${dayIdx}_${periodIdx}_${classId}`;
   const newDis = { ...disabledSlots.value };
   if (newDis[key]) delete newDis[key];
@@ -527,6 +579,7 @@ const checkConflict = (dayIdx, periodIdx, teacherId, currentClassId) => {
 };
 
 const handleCellClick = (dayIdx, periodIdx, classId) => {
+  if (checkLocked()) return;
   if (isDisableMode.value) return toggleSlotDisable(dayIdx, periodIdx, classId);
   if (!selectedAllocation.value) {
     if (getSlot(dayIdx, periodIdx, classId)) {
@@ -554,7 +607,7 @@ const handleCellClick = (dayIdx, periodIdx, classId) => {
   if (selectedAllocation.value.classId.toString() !== classId.toString()) {
     return showNotification(
       `Gagal: Alokasi ini khusus untuk Kelas ${selectedAllocation.value.classId}`,
-      "error"
+      "error",
     );
   }
 
@@ -614,6 +667,7 @@ const runAutoSchedule = () => {
 };
 
 const handleAutoSchedule = () => {
+  if (checkLocked()) return;
   isGenerating.value = true;
   setTimeout(() => {
     runAutoSchedule();
@@ -622,6 +676,7 @@ const handleAutoSchedule = () => {
 };
 
 const handleResetSchedule = () => {
+  if (checkLocked()) return;
   modal.value = {
     title: "Reset Jadwal",
     message:
@@ -639,12 +694,14 @@ const exportToExcel = () => {
   const wb = window.XLSX.utils.book_new();
 
   // ========== 1. SHEET: JADWAL PELAJARAN ==========
-  const wsScheduleData = [["HARI", "JAM", ...classes.value.map((c) => "KELAS " + c)]];
+  const wsScheduleData = [
+    ["HARI", "JAM", ...classes.value.map((c) => "KELAS " + c)],
+  ];
   DAYS.forEach((day, dIdx) => {
     for (let pIdx = 0; pIdx < periodTimes.value.length; pIdx++) {
       const period = periodTimes.value[pIdx];
-      const timeStr = typeof period === 'object' ? period.time : period;
-      const isBreak = typeof period === 'object' && period.isBreak;
+      const timeStr = typeof period === "object" ? period.time : period;
+      const isBreak = typeof period === "object" && period.isBreak;
 
       const row = [day, timeStr];
 
@@ -680,7 +737,12 @@ const exportToExcel = () => {
   // ========== 3. SHEET: DATA MAPEL ==========
   const wsMapelData = [["NO", "NAMA MATA PELAJARAN", "JENIS"]];
   subjects.value.forEach((subject, idx) => {
-    const typeLabel = subject.type === "agama" ? "Agama" : subject.type === "umum" ? "Umum" : "Mulok";
+    const typeLabel =
+      subject.type === "agama"
+        ? "Agama"
+        : subject.type === "umum"
+          ? "Umum"
+          : "Mulok";
     wsMapelData.push([idx + 1, subject.name, typeLabel]);
   });
   const wsMapel = window.XLSX.utils.aoa_to_sheet(wsMapelData);
@@ -695,7 +757,9 @@ const exportToExcel = () => {
   window.XLSX.utils.book_append_sheet(wb, wsKelas, "Data Kelas");
 
   // ========== 5. SHEET: KURIKULUM (JTM per Mapel per Kelas) ==========
-  const wsKurikulumData = [["MATA PELAJARAN", ...classes.value.map((c) => `KELAS ${c}`)]];
+  const wsKurikulumData = [
+    ["MATA PELAJARAN", ...classes.value.map((c) => `KELAS ${c}`)],
+  ];
   subjects.value.forEach((subject) => {
     const row = [subject.name];
     classes.value.forEach((cls) => {
@@ -718,7 +782,9 @@ const exportToExcel = () => {
   window.XLSX.utils.book_append_sheet(wb, wsWali, "Wali Kelas");
 
   // ========== 7. SHEET: ALOKASI JAM ==========
-  const wsAlokasiData = [["NO", "GURU", "MATA PELAJARAN", "KELAS", "JTM", "TERJADWAL"]];
+  const wsAlokasiData = [
+    ["NO", "GURU", "MATA PELAJARAN", "KELAS", "JTM", "TERJADWAL"],
+  ];
   allocations.value.forEach((alloc, idx) => {
     const teacher = teachers.value.find((t) => t.id === alloc.teacherId);
     const subject = subjects.value.find((s) => s.id === alloc.subjectId);
@@ -729,17 +795,21 @@ const exportToExcel = () => {
       subject ? subject.name : "-",
       `Kelas ${alloc.classId}`,
       alloc.jtm,
-      usedJtm
+      usedJtm,
     ]);
   });
   const wsAlokasi = window.XLSX.utils.aoa_to_sheet(wsAlokasiData);
   window.XLSX.utils.book_append_sheet(wb, wsAlokasi, "Alokasi Jam");
 
   // ========== 8. SHEET: REKAP JTM GURU ==========
-  const wsRekapData = [["NO", "NAMA GURU", "TOTAL JTM KURIKULUM", "TOTAL TERJADWAL", "SISA"]];
+  const wsRekapData = [
+    ["NO", "NAMA GURU", "TOTAL JTM KURIKULUM", "TOTAL TERJADWAL", "SISA"],
+  ];
   teachers.value.forEach((teacher, idx) => {
     // Find all allocations for this teacher
-    const teacherAllocs = allocations.value.filter((a) => a.teacherId === teacher.id);
+    const teacherAllocs = allocations.value.filter(
+      (a) => a.teacherId === teacher.id,
+    );
     let totalJtm = 0;
     let totalUsed = 0;
     teacherAllocs.forEach((alloc) => {
@@ -751,7 +821,7 @@ const exportToExcel = () => {
       teacher.name,
       totalJtm,
       totalUsed,
-      totalJtm - totalUsed
+      totalJtm - totalUsed,
     ]);
   });
   const wsRekap = window.XLSX.utils.aoa_to_sheet(wsRekapData);
@@ -796,51 +866,119 @@ const isTaskResultsEmpty = computed(() => {
 
 <template>
   <div
-    class="h-screen flex flex-col lg:flex-row bg-white dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300">
+    class="h-screen flex flex-col lg:flex-row bg-white dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300"
+  >
     <!-- Sidebar -->
     <AppSidebar :isOpen="isSidebarOpen" @close="isSidebarOpen = false" />
 
     <!-- Mobile Sidebar Overlay -->
-    <Transition enter-active-class="transition-opacity ease-linear duration-300" enter-from-class="opacity-0"
-      enter-to-class="opacity-100" leave-active-class="transition-opacity ease-linear duration-300"
-      leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="isSidebarOpen" @click="isSidebarOpen = false"
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"></div>
+    <Transition
+      enter-active-class="transition-opacity ease-linear duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity ease-linear duration-300"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isSidebarOpen"
+        @click="isSidebarOpen = false"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"
+      ></div>
     </Transition>
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <!-- Main Header -->
-      <AppHeader v-if="isAppHeaderVisible" :isSidebarOpen="isSidebarOpen" :isGenerating="isGenerating"
-        @toggleSidebar="toggleSidebar" @backup="handleBackup" @restore="restoreInputRef?.click()"
-        @export="exportToExcel" /><input type="file" ref="restoreInputRef" @change="handleRestore" accept=".json"
-        class="hidden" />
+      <AppHeader
+        v-if="isAppHeaderVisible"
+        :isSidebarOpen="isSidebarOpen"
+        :isGenerating="isGenerating"
+        @toggleSidebar="toggleSidebar"
+        @backup="handleBackup"
+        @restore="restoreInputRef?.click()"
+        @export="exportToExcel"
+        @notify="showNotification($event)"
+      /><input
+        type="file"
+        ref="restoreInputRef"
+        @change="handleRestore"
+        accept=".json"
+        class="hidden"
+      />
 
       <!-- Main Content Area -->
-      <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-50/50 dark:bg-slate-950/50">
+      <main
+        class="flex-1 flex flex-col relative overflow-hidden bg-slate-50/50 dark:bg-slate-950/50"
+      >
         <router-view v-slot="{ Component }">
-          <component :is="Component" :isDisableMode="isDisableMode" :isGenerating="isGenerating" :classes="classes"
-            :taskClassFilter="taskClassFilter" :taskSearchQuery="taskSearchQuery"
-            :taskSidebarClasses="taskSidebarClasses" :isTaskResultsEmpty="isTaskResultsEmpty" :allocations="allocations"
-            :selectedAllocation="selectedAllocation" :DAYS="DAYS" :PERIOD_TIMES="periodTimes" :teachers="teachers"
-            :subjects="subjects" :curriculum="curriculum" :homerooms="homerooms" :allocForm="allocForm"
-            :filterClass="filterClass" :filterTeacher="filterTeacher" :filteredAllocations="filteredAllocations"
-            :periodTimes="periodTimes" @addPeriod="addPeriod" @removePeriod="removePeriod" @updatePeriod="updatePeriod"
-            @updatePeriodOrder="updatePeriodOrder" :getSlot="getSlot" :getAllocDetails="getAllocDetails"
-            :getUsedJtm="getUsedJtm" :isSlotDisabled="isSlotDisabled" :getTeacherHomeroomClass="getTeacherHomeroomClass"
-            :isAppHeaderVisible="isAppHeaderVisible" @toggleAppHeader="isAppHeaderVisible = !isAppHeaderVisible"
-            @toggleDisableMode="isDisableMode = !isDisableMode" @autoSchedule="handleAutoSchedule"
-            @update:taskClassFilter="taskClassFilter = $event" @update:taskSearchQuery="taskSearchQuery = $event"
-            @selectAlloc="selectedAllocation = $event" @resetSlots="resetAllocationSlots($event.id)"
-            @resetSchedule="handleResetSchedule" @cellClick="handleCellClick" @addTeacher="addTeacher"
-            @removeTeacher="removeTeacher" @addSubject="addSubject" @removeSubject="removeSubject"
-            @updateTeacher="updateTeacher" @updateSubject="updateSubject" @addClass="addClass"
-            @removeClass="removeClass" @update:filterClass="filterClass = $event"
-            @update:filterTeacher="filterTeacher = $event" @add="addAllocation" @remove="removeAllocation"
-            @teacherChange="handleTeacherChangeInAlloc" @downloadTemplate="downloadCurriculumTemplate"
-            @uploadExcel="fileInputRef?.click()" @updateCurriculum="updateCurriculum" @setHomeroom="setHomeroomTeacher"
-            @showModal="modal = $event" />
+          <component
+            :is="Component"
+            :isDisableMode="isDisableMode"
+            :isGenerating="isGenerating"
+            :classes="classes"
+            :taskClassFilter="taskClassFilter"
+            :taskSearchQuery="taskSearchQuery"
+            :taskSidebarClasses="taskSidebarClasses"
+            :isTaskResultsEmpty="isTaskResultsEmpty"
+            :allocations="allocations"
+            :selectedAllocation="selectedAllocation"
+            :DAYS="DAYS"
+            :PERIOD_TIMES="periodTimes"
+            :teachers="teachers"
+            :subjects="subjects"
+            :curriculum="curriculum"
+            :homerooms="homerooms"
+            :allocForm="allocForm"
+            :filterClass="filterClass"
+            :filterTeacher="filterTeacher"
+            :filteredAllocations="filteredAllocations"
+            :periodTimes="periodTimes"
+            @addPeriod="addPeriod"
+            @removePeriod="removePeriod"
+            @updatePeriod="updatePeriod"
+            @updatePeriodOrder="updatePeriodOrder"
+            :getSlot="getSlot"
+            :getAllocDetails="getAllocDetails"
+            :getUsedJtm="getUsedJtm"
+            :isSlotDisabled="isSlotDisabled"
+            :getTeacherHomeroomClass="getTeacherHomeroomClass"
+            :isAppHeaderVisible="isAppHeaderVisible"
+            @toggleAppHeader="isAppHeaderVisible = !isAppHeaderVisible"
+            @toggleDisableMode="isDisableMode = !isDisableMode"
+            @autoSchedule="handleAutoSchedule"
+            @update:taskClassFilter="taskClassFilter = $event"
+            @update:taskSearchQuery="taskSearchQuery = $event"
+            @selectAlloc="selectedAllocation = $event"
+            @resetSlots="resetAllocationSlots($event.id)"
+            @resetSchedule="handleResetSchedule"
+            @cellClick="handleCellClick"
+            @addTeacher="addTeacher"
+            @removeTeacher="removeTeacher"
+            @addSubject="addSubject"
+            @removeSubject="removeSubject"
+            @updateTeacher="updateTeacher"
+            @updateSubject="updateSubject"
+            @addClass="addClass"
+            @removeClass="removeClass"
+            @update:filterClass="filterClass = $event"
+            @update:filterTeacher="filterTeacher = $event"
+            @add="addAllocation"
+            @remove="removeAllocation"
+            @teacherChange="handleTeacherChangeInAlloc"
+            @downloadTemplate="downloadCurriculumTemplate"
+            @uploadExcel="fileInputRef?.click()"
+            @updateCurriculum="updateCurriculum"
+            @setHomeroom="setHomeroomTeacher"
+            @showModal="modal = $event"
+          />
         </router-view>
-        <input type="file" ref="fileInputRef" @change="handleUploadExcel" accept=".xlsx, .xls" class="hidden" />
+        <input
+          type="file"
+          ref="fileInputRef"
+          @change="handleUploadExcel"
+          accept=".xlsx, .xls"
+          class="hidden"
+        />
 
         <!-- Scroll To Top -->
         <ScrollToTop />
@@ -848,28 +986,50 @@ const isTaskResultsEmpty = computed(() => {
     </div>
 
     <!-- Global Common Components -->
-    <AppModal :show="!!modal" :title="modal?.title || ''" :message="modal?.message || ''" @confirm="modal?.onConfirm"
-      @cancel="modal = null" />
+    <AppModal
+      :show="!!modal"
+      :title="modal?.title || ''"
+      :message="modal?.message || ''"
+      @confirm="modal?.onConfirm"
+      @cancel="modal = null"
+    />
 
-    <AppNotification :show="!!notification" :msg="notification?.msg || ''" :type="notification?.type" />
+    <AppNotification
+      :show="!!notification"
+      :msg="notification?.msg || ''"
+      :type="notification?.type"
+    />
 
     <!-- Selection Indicator -->
-    <Transition enter-active-class="transition duration-500 ease-out" enter-from-class="opacity-0 translate-y-20"
-      enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-300 ease-in"
-      leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-20">
-      <div v-if="selectedAllocation"
-        class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-800 border border-white/10 rounded-3xl px-8 py-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-40 flex items-center gap-6 border-b-4 border-b-indigo-500 transition-colors duration-300">
+    <Transition
+      enter-active-class="transition duration-500 ease-out"
+      enter-from-class="opacity-0 translate-y-20"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-300 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-20"
+    >
+      <div
+        v-if="selectedAllocation"
+        class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-800 border border-white/10 rounded-3xl px-8 py-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-40 flex items-center gap-6 border-b-4 border-b-indigo-500 transition-colors duration-300"
+      >
         <div class="flex flex-col">
-          <span class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1 italic">Menyusun
-            Jadwal:</span>
+          <span
+            class="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1 italic"
+            >Menyusun Jadwal:</span
+          >
           <span class="text-sm font-bold text-white tracking-tight">
             {{ getAllocDetails(selectedAllocation.id)?.subjectName }}
             <span class="text-white/40 mx-2">|</span>
-            <span class="text-indigo-400">Kelas {{ selectedAllocation.classId }}</span>
+            <span class="text-indigo-400"
+              >Kelas {{ selectedAllocation.classId }}</span
+            >
           </span>
         </div>
-        <button @click="selectedAllocation = null"
-          class="p-2.5 bg-white/10 hover:bg-rose-500 text-white/50 hover:text-white rounded-2xl transition-all active:scale-95">
+        <button
+          @click="selectedAllocation = null"
+          class="p-2.5 bg-white/10 hover:bg-rose-500 text-white/50 hover:text-white rounded-2xl transition-all active:scale-95"
+        >
           <X :size="20" />
         </button>
       </div>

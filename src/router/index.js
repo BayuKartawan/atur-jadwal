@@ -7,6 +7,7 @@ import CurriculumPage from '../page/CurriculumPage.vue'
 import WaliKelasPage from '../page/WaliKelasPage.vue'
 import RekapPage from '../page/RekapPage.vue'
 import TeacherSchedulePage from '../page/TeacherSchedulePage.vue'
+import ClassSchedulePage from '../page/ClassSchedulePage.vue'
 import AboutPage from '../page/AboutPage.vue'
 
 const routes = [
@@ -27,6 +28,11 @@ const routes = [
                 path: 'teacher-schedule',
                 name: 'teacher-schedule',
                 component: TeacherSchedulePage
+            },
+            {
+                path: 'class-schedule',
+                name: 'class-schedule',
+                component: ClassSchedulePage
             },
             {
                 path: 'data-master',

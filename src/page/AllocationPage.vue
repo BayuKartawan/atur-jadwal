@@ -1,5 +1,5 @@
 <script setup>
-import AllocationManager from '../components/scheduling/AllocationManager.vue';
+import AllocationManager from "../components/scheduling/AllocationManager.vue";
 
 const props = defineProps({
   teachers: Array,
@@ -11,33 +11,37 @@ const props = defineProps({
   filterTeacher: String,
   filteredAllocations: Array,
   getAllocDetails: Function,
-  getTeacherHomeroomClass: Function
+  getTeacherHomeroomClass: Function,
 });
 
 const emit = defineEmits([
-  'update:filterClass', 'update:filterTeacher', 
-  'add', 'remove', 'teacherChange', 'showModal'
+  "update:filterClass",
+  "update:filterTeacher",
+  "add",
+  "remove",
+  "teacherChange",
+  "showModal",
 ]);
 </script>
 
 <template>
   <div class="h-full overflow-y-auto lg:overflow-hidden custom-scrollbar">
-    <AllocationManager 
-      :teachers="teachers" 
-      :subjects="subjects" 
+    <AllocationManager
+      :teachers="teachers"
+      :subjects="subjects"
       :classes="classes"
-      :allocations="allocations" 
-      :allocForm="allocForm" 
-      :filterClass="filterClass" 
+      :allocations="allocations"
+      :allocForm="allocForm"
+      :filterClass="filterClass"
       :filterTeacher="filterTeacher"
-      :filteredAllocations="filteredAllocations" 
+      :filteredAllocations="filteredAllocations"
       :getAllocDetails="getAllocDetails"
-      :getTeacherHomeroomClass="getTeacherHomeroomClass" 
+      :getTeacherHomeroomClass="getTeacherHomeroomClass"
       @update:filterClass="$emit('update:filterClass', $event)"
-      @update:filterTeacher="$emit('update:filterTeacher', $event)" 
-      @add="$emit('add')" 
+      @update:filterTeacher="$emit('update:filterTeacher', $event)"
+      @add="$emit('add')"
       @remove="$emit('remove', $event)"
-      @teacherChange="$emit('teacherChange', $event)" 
+      @teacherChange="$emit('teacherChange', $event)"
       @showModal="$emit('showModal', $event)"
     />
   </div>

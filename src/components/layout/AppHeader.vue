@@ -1,69 +1,29 @@
 <script setup>
 import {
-  DatabaseBackup,
-  RefreshCw,
-  Download,
   Sparkles,
   Menu,
   X,
-  Trash2,
+  Lock, 
 } from "lucide-vue-next";
-import { ref, onMounted, computed } from "vue";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
-import AppButton from "../ui/AppButton.vue";
-import AppModal from "../common/AppModal.vue";
-import LockModal from "../common/LockModal.vue";
+import ThemeSwitcher from "../ui/ThemeSwitcher.vue";
 import { useLockSystem } from "../../composables/useLockSystem";
-import { Lock, Unlock } from "lucide-vue-next";
 
 defineProps({
   isGenerating: Boolean,
   isSidebarOpen: Boolean,
 });
 
-const emit = defineEmits([
-  "backup",
-  "restore",
-  "export",
+defineEmits([
   "toggleSidebar",
-  "notify",
 ]);
 
 const route = useRoute();
-const showClearConfirm = ref(false);
-
-onMounted(() => {
-  // Always respect system preference
-  if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-
-  // Listen for system theme changes
-  window
-    .matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", (event) => {
-      if (event.matches) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    });
-});
-
-const handleClearData = () => {
-  showClearConfirm.value = true;
-};
-
-const confirmClearData = () => {
-  localStorage.clear();
-  showClearConfirm.value = false;
-  window.location.reload();
-};
 
 const pageTitle = computed(() => {
   const titles = {
+    dashboard: "Dashboard",
     "data-master": "Data Master",
     curriculum: "Kurikulum",
     "wali-kelas": "Wali Kelas",
@@ -75,162 +35,68 @@ const pageTitle = computed(() => {
   return titles[route.name] || "Ikhtisar";
 });
 
-// Lock System
-const { isLocked, lockApp, unlockApp } = useLockSystem();
-const showLockModal = ref(false);
-const lockValidationError = ref("");
-
-const handleLockClick = () => {
-  lockValidationError.value = "";
-  showLockModal.value = true;
-};
-
-const handleLockConfirm = async (password) => {
-  if (isLocked.value) {
-    const success = await unlockApp(password);
-    if (!success) {
-      lockValidationError.value = "Password salah!";
-    } else {
-      showLockModal.value = false;
-      emit("notify", "Aplikasi berhasil dibuka.");
-    }
-  } else {
-    await lockApp(password);
-    showLockModal.value = false;
-  }
-};
+// Lock Status
+const { isLocked } = useLockSystem();
 </script>
 
 <template>
   <header
-    class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-4 lg:px-8 py-4 flex justify-between items-center z-30 shrink-0 transition-all duration-300"
+    class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 flex justify-between items-center z-30 shrink-0 sticky top-0 transition-all duration-300"
   >
-    <div class="flex items-center gap-4 shrink-0">
+    <div class="flex items-center gap-3 md:gap-4 shrink-0">
       <!-- Menu Toggle -->
       <button
         @click="$emit('toggleSidebar')"
-        class="p-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+        class="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
       >
-        <Menu v-if="!isSidebarOpen" :size="20" />
-        <X v-else :size="20" />
+        <Menu v-if="!isSidebarOpen" :size="20" stroke-width="2.5" />
+        <X v-else :size="20" stroke-width="2.5" />
       </button>
 
       <div
         v-if="isGenerating"
-        class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-2xl border border-indigo-100 dark:border-indigo-800 animate-pulse"
+        class="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-900/40 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800 animate-pulse"
       >
-        <Sparkles :size="16" class="text-indigo-600 dark:text-indigo-400" />
+        <Sparkles :size="14" class="text-indigo-600 dark:text-indigo-400" />
         <span
-          class="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest"
-          >Mesin AI Sedang Memproses...</span
+          class="text-[10px] sm:text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-widest"
+          >AI Processing...</span
         >
       </div>
-      <div v-else class="flex flex-col">
-        <h2
-          class="text-[8px] md:text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]"
-        >
-          Dashboard
-        </h2>
-        <h1
-          class="text-xs md:text-base font-semibold text-slate-900 dark:text-white leading-tight"
-        >
-          {{ pageTitle }}
-        </h1>
+      <div v-else class="flex flex-col min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <h1
+              class="text-lg md:text-xl font-bold text-slate-800 dark:text-white leading-tight tracking-tight truncate"
+            >
+              {{ pageTitle }}
+            </h1>
+            <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:inline-block shrink-0">Pro</span>
+          </div>
       </div>
     </div>
 
+    <!-- Right Side Actions -->
     <div
-      class="flex items-center gap-1.5 md:gap-3 p-0.5 md:p-1 overflow-x-auto no-scrollbar"
+      class="flex items-center gap-2 md:gap-4"
     >
-      <AppButton
-        @click="handleLockClick"
-        :variant="isLocked ? 'danger' : 'secondary'"
-        size="md"
-        class="border-none !p-2 md:!p-2.5 md:!px-4 hover:!bg-indigo-50 dark:hover:!bg-indigo-900/40"
-        :class="
-          isLocked
-            ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-            : 'bg-slate-50 dark:bg-slate-800'
-        "
+      <!-- Lock Indicator -->
+      <div 
+        v-if="isLocked"
+        class="flex items-center gap-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-100 dark:border-rose-800/50"
+        title="Aplikasi Terkunci"
       >
-        <template #icon-left>
-          <Lock v-if="isLocked" :size="14" />
-          <Unlock v-else :size="14" />
-        </template>
-        <span class="hidden md:inline">{{ isLocked ? "Buka" : "Kunci" }}</span>
-      </AppButton>
-      <AppButton
-        @click="$emit('backup')"
-        variant="secondary"
-        size="md"
-        class="border-none bg-slate-50 dark:bg-slate-800 !p-2 md:!p-2.5 md:!px-4 hover:!bg-indigo-50 dark:hover:!bg-indigo-900/40"
-      >
-        <template #icon-left><DatabaseBackup :size="14" /></template>
-        <span class="hidden md:inline">Backup</span>
-      </AppButton>
+        <Lock :size="14" stroke-width="2.5" />
+        <span class="text-[10px] font-black uppercase tracking-widest hidden md:inline">Locked</span>
+      </div>
 
-      <AppButton
-        @click="$emit('restore')"
-        variant="secondary"
-        size="md"
-        class="border-none bg-slate-50 dark:bg-slate-800 !p-2 md:!p-2.5 md:!px-4 hover:!bg-indigo-50 dark:hover:!bg-indigo-900/40"
-      >
-        <template #icon-left><RefreshCw :size="14" /></template>
-        <span class="hidden md:inline">Restore</span>
-      </AppButton>
-
-      <AppButton
-        @click="handleClearData"
-        variant="danger"
-        size="md"
-        class="border-none !p-2 md:!p-2.5 md:!px-4"
-        :disabled="isLocked"
-      >
-        <template #icon-left><Trash2 :size="14" /></template>
-        <span class="hidden md:inline">Hapus Data</span>
-      </AppButton>
-
-      <div
-        class="hidden md:block h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1"
-      ></div>
-
-      <AppButton
-        @click="$emit('export')"
-        variant="primary"
-        size="md"
-        class="!p-2 md:!p-2.5 md:!px-6 shadow-md shadow-indigo-100 dark:shadow-none"
-      >
-        <template #icon-left><Download :size="16" /></template>
-        <span class="hidden md:inline">Ekspor Excel</span>
-      </AppButton>
+      <!-- Theme Switcher -->
+      <div>
+        <ThemeSwitcher />
+      </div>
     </div>
   </header>
-
-  <AppModal
-    :show="showClearConfirm"
-    title="Hapus Semua Data"
-    message="Apakah Anda yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan dan semua jadwal Anda akan hilang."
-    confirm-text="Ya, Hapus Semua"
-    cancel-text="Batal"
-    variant="danger"
-    @confirm="confirmClearData"
-    @cancel="showClearConfirm = false"
-  />
-
-  <LockModal
-    v-model:show="showLockModal"
-    :is-locked="isLocked"
-    :validation-error="lockValidationError"
-    @confirm="handleLockConfirm"
-  />
 </template>
 
 <style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+/* No additional styles needed with Tailwind */
 </style>

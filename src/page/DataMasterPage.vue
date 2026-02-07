@@ -81,7 +81,8 @@ const masterSubTab = ref("guru");
       <ClassManager
         v-if="masterSubTab === 'kelas'"
         :classes="classes"
-        @remove="$emit('addClass', $event, true)"
+        @add="$emit('addClass', $event)"
+        @remove="$emit('removeClass', $event)"
       />
       <TimeSlotManager
         v-if="masterSubTab === 'jam'"

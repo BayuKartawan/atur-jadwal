@@ -309,16 +309,16 @@ const gridTemplate = computed(
             <div
               v-for="cls in classes"
               :key="cls"
-              @click="$emit('cellClick', dIdx, pIdx, cls)"
-              class="p-2 lg:p-3 border-r border-slate-50 dark:border-slate-800 min-h-[70px] lg:min-h-[90px] flex flex-col justify-center items-center text-center cursor-pointer group transition-all relative overflow-hidden"
+              @click="isSlotDisabled(dIdx, pIdx, cls) && !isDisableMode ? null : $emit('cellClick', dIdx, pIdx, cls)"
+              class="p-2 lg:p-3 border-r border-slate-50 dark:border-slate-800 min-h-[70px] lg:min-h-[90px] flex flex-col justify-center items-center text-center group transition-all relative overflow-hidden"
               :class="[
                 isSlotDisabled(dIdx, pIdx, cls)
-                  ? 'bg-slate-800/90 dark:bg-slate-950/90'
+                  ? 'bg-slate-800/90 dark:bg-slate-950/90' + (!isDisableMode ? ' cursor-not-allowed' : ' cursor-pointer')
                   : getSlot(dIdx, pIdx, cls)
-                    ? 'bg-white dark:bg-slate-900 shadow-sm'
+                    ? 'bg-white dark:bg-slate-900 shadow-sm cursor-pointer'
                     : showEmptyCells
-                      ? 'bg-amber-100/80 dark:bg-amber-950/40 ring-2 ring-inset ring-amber-400/50 dark:ring-amber-500/30'
-                      : 'hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:border-emerald-100 dark:hover:border-emerald-900',
+                      ? 'bg-amber-100/80 dark:bg-amber-950/40 ring-2 ring-inset ring-amber-400/50 dark:ring-amber-500/30 cursor-pointer'
+                      : 'hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:border-emerald-100 dark:hover:border-emerald-900 cursor-pointer',
                 selectedAllocation?.classId === cls &&
                 !isSlotDisabled(dIdx, pIdx, cls)
                   ? '!bg-emerald-50/40 dark:!bg-emerald-900/10 ring-2 ring-inset ring-emerald-500/30 dark:ring-emerald-400/30 shadow-inner'

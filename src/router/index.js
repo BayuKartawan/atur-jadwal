@@ -10,6 +10,8 @@ import TeacherSchedulePage from '../page/TeacherSchedulePage.vue'
 import ClassSchedulePage from '../page/ClassSchedulePage.vue'
 import AboutPage from '../page/AboutPage.vue'
 
+import DashboardPage from '../page/DashboardPage.vue'
+
 const routes = [
     {
         path: '/',
@@ -17,7 +19,12 @@ const routes = [
         children: [
             {
                 path: '',
-                redirect: '/about'
+                redirect: '/dashboard'
+            },
+            {
+                path: 'dashboard',
+                name: 'dashboard',
+                component: DashboardPage
             },
             {
                 path: 'schedule',

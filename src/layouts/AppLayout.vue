@@ -669,6 +669,10 @@ const checkConflict = (dayIdx, periodIdx, teacherId, currentClassId) => {
 const handleCellClick = (dayIdx, periodIdx, classId) => {
   if (checkLocked()) return;
   if (isDisableMode.value) return toggleSlotDisable(dayIdx, periodIdx, classId);
+
+  // Jika slot dinonaktifkan dan tidak dalam mode edit batas, abaikan klik
+  if (isSlotDisabled(dayIdx, periodIdx, classId)) return;
+
   if (!selectedAllocation.value) {
     if (getSlot(dayIdx, periodIdx, classId)) {
       modal.value = {
@@ -957,7 +961,7 @@ const isTaskResultsEmpty = computed(() => {
     class="h-screen flex flex-col lg:flex-row bg-white dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300"
   >
     <!-- Sidebar -->
-    <AppSidebar :isOpen="isSidebarOpen" @close="isSidebarOpen = false" />
+    <AppSidebar :isOpen="isSidebarOpen" @close="isSidebarOpen = false" @toggle="toggleSidebar" />
 
     <!-- Mobile Sidebar Overlay -->
     <Transition
@@ -982,10 +986,6 @@ const isTaskResultsEmpty = computed(() => {
         :isSidebarOpen="isSidebarOpen"
         :isGenerating="isGenerating"
         @toggleSidebar="toggleSidebar"
-        @backup="handleBackup"
-        @restore="restoreInputRef?.click()"
-        @export="exportToExcel"
-        @notify="showNotification($event)"
       /><input
         type="file"
         ref="restoreInputRef"
@@ -1062,6 +1062,10 @@ const isTaskResultsEmpty = computed(() => {
             :isEditing="!!editingAllocationId"
             @edit="handleEditAllocation"
             @cancelEdit="cancelEditAllocation"
+            @backup="handleBackup"
+            @restore="restoreInputRef?.click()"
+            @export="exportToExcel"
+            @notify="showNotification($event)"
           />
         </router-view>
         <input

@@ -1,16 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import AppLayout from '../layouts/AppLayout.vue'
-import SchedulePage from '../page/SchedulePage.vue'
-import DataMasterPage from '../page/DataMasterPage.vue'
-import AllocationPage from '../page/AllocationPage.vue'
-import CurriculumPage from '../page/CurriculumPage.vue'
-import WaliKelasPage from '../page/WaliKelasPage.vue'
-import RekapPage from '../page/RekapPage.vue'
-import TeacherSchedulePage from '../page/TeacherSchedulePage.vue'
-import ClassSchedulePage from '../page/ClassSchedulePage.vue'
-import AboutPage from '../page/AboutPage.vue'
+import AppLayout from '../tata-letak-layout/TataLetakAplikasi.vue'
+import HalamanJadwal from '../halaman/HalamanJadwal.vue'
+import HalamanDataMaster from '../halaman/HalamanDataMaster.vue'
+import HalamanAlokasi from '../halaman/HalamanAlokasi.vue'
+import HalamanKurikulum from '../halaman/HalamanKurikulum.vue'
+import HalamanRekap from '../halaman/HalamanRekap.vue'
+import HalamanJadwalGuru from '../halaman/HalamanJadwalGuru.vue'
+import HalamanJadwalKelas from '../halaman/HalamanJadwalKelas.vue'
+import HalamanTentang from '../halaman/HalamanTentang.vue'
 
-import DashboardPage from '../page/DashboardPage.vue'
+import HalamanBeranda from '../halaman/HalamanBeranda.vue'
 
 const routes = [
     {
@@ -19,57 +18,71 @@ const routes = [
         children: [
             {
                 path: '',
-                redirect: '/dashboard'
+                redirect: '/beranda'
             },
             {
-                path: 'dashboard',
-                name: 'dashboard',
-                component: DashboardPage
+                path: 'beranda',
+                name: 'beranda',
+                component: HalamanBeranda
             },
             {
-                path: 'schedule',
-                name: 'schedule',
-                component: SchedulePage
+                path: 'jadwal',
+                name: 'jadwal',
+                component: HalamanJadwal
             },
             {
-                path: 'teacher-schedule',
-                name: 'teacher-schedule',
-                component: TeacherSchedulePage
+                path: 'jadwal-guru',
+                name: 'jadwal-guru',
+                component: HalamanJadwalGuru
             },
             {
-                path: 'class-schedule',
-                name: 'class-schedule',
-                component: ClassSchedulePage
+                path: 'jadwal-kelas',
+                name: 'jadwal-kelas',
+                component: HalamanJadwalKelas
             },
             {
                 path: 'data-master',
-                name: 'data-master',
-                component: DataMasterPage
+                redirect: '/data-master/guru'
             },
             {
-                path: 'allocation',
-                name: 'allocation',
-                component: AllocationPage
+                path: 'data-master/guru',
+                name: 'data-master-guru',
+                component: HalamanDataMaster
             },
             {
-                path: 'curriculum',
-                name: 'curriculum',
-                component: CurriculumPage
+                path: 'data-master/mapel',
+                name: 'data-master-mapel',
+                component: HalamanDataMaster
             },
             {
-                path: 'wali-kelas',
-                name: 'wali-kelas',
-                component: WaliKelasPage
+                path: 'data-master/kelas',
+                name: 'data-master-kelas',
+                component: HalamanDataMaster
+            },
+            {
+                path: 'data-master/jam',
+                name: 'data-master-jam',
+                component: HalamanDataMaster
+            },
+            {
+                path: 'alokasi',
+                name: 'alokasi',
+                component: HalamanAlokasi
+            },
+            {
+                path: 'kurikulum',
+                name: 'kurikulum',
+                component: HalamanKurikulum
             },
             {
                 path: 'rekap',
                 name: 'rekap',
-                component: RekapPage
+                component: HalamanRekap
             },
             {
-                path: 'about',
-                name: 'about',
-                component: AboutPage
+                path: 'tentang',
+                name: 'tentang',
+                component: HalamanTentang
             }
         ]
     }
